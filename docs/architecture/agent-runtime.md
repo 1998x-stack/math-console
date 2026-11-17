@@ -75,13 +75,13 @@ Handoff 的 JSON Schema 只保证数据形状，不保证证据真实，也不�
 
 **Claude Code**：通过 .claude/agents/*.md 的 name、description、tools 发现与委派。专业审校仅赋予 Read/Grep/Glob，避免修改证据。但基础模型仍然可能判断错误，需要人工质检。
 
-**Codex**：通过 .codex/agents/*.toml 定义角色规则文件，项目 .codex/config.toml 的 `[agents]` 配置多 Agent（`enabled`、`max_concurrent_threads_per_session`），**仅在受信任项目加载**。实测 codex-cli 0.157.1：`spawn_agent(task_name, message, fork_turns, model, reasoning_effort)` 可以开启独立上下文的子 Agent，但**没有 role/agent_type 参数，也不向模型暴露可选角色**；因此不能靠点名 `math-proof-auditor` 来触发该文件，只能把角色 Skill 路径与任务描述一起交给新上下文。自定义角色继承父级权限与沙箱，不允许凭角色提示假称严格只读。
+**Codex**：通过 .codex/agents/*.toml 定义角色规则文件，项目 .codex/config.toml 的 `[agents]` 配置多 Agent（`enabled`、`max_concurrent_threads_per_session`），**仅在受信任项目加载**。当前会话的 `collaboration.spawn_agent` 已暴露 10 个项目角色的 `agent_type` 枚举。实际以 `agent_type="math-conductor"` 加载角色提示，并由该角色再委派 `math-image-interpreter`；后者报告直接看到了原图且识别出一处待确认歧义。委派任务必须显式给出角色、Skill、输入、输出与文件所有权；不同版本若没有 `agent_type`，应记录能力降级，不能假称角色文件已加载。自定义角色继承父级权限与沙箱，不能凭角色提示假称 OS 级只读。
 
 **Codex 委派自查（可复现）：**
 
 ```bash
 codex doctor | grep -A6 '^Configuration'   # 确认项目 config.toml 是否被加载
-codex exec -m gpt-6-luna "列出 spawn_agent 的精确参数名；没有 role/agent_type 就说没有"
+codex exec "列出当前 spawn_agent 的精确参数和 agent_type 枚举；没有则如实说明"
 ```
 
 **Pi**：.pi/agents/*.md 为兼容官方示例 Subagent 扩展的角色数据。默认 Pi 不自动扫描并运行项目子 Agent，须选择信任该项目并配置扩展 agentScope。未启用扩展时可用 prompt/Skill 主动编排，但不能声称自动实现了独立数学审查。

@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | OpenCode V2 | [.opencode/agents/](.opencode/agents/) | 主控 primary / 专家 subagent，可 @ 指定或自动匹配 |
 | Claude Code | [.claude/agents/](.claude/agents/) | Agent tool 基于 description 调用或用户明确委派 |
-| Codex | [.codex/agents/](.codex/agents/) | TOML 角色规则；`spawn_agent` 可开独立上下文，但无 role 参数（见 `.codex/README.md`） |
+| Codex | [.codex/agents/](.codex/agents/) | TOML 角色规则；当前会话的 `collaboration.spawn_agent` 支持 `agent_type` 选择项目角色（见 `.codex/README.md`） |
 | Pi | [.pi/agents/](.pi/agents/) | 必须启用项目级 Subagent 扩展或手动使用 Skills |
 
 ## 10 个 Agent 对应 9 个 Skills

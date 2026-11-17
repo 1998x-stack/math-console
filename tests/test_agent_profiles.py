@@ -32,6 +32,11 @@ class NativeAgentsTest(unittest.TestCase):
             self.assertTrue(d["developer_instructions"])
             self.assertNotIn("approval_policy",d)
             self.assertNotIn("sandbox_mode",d)
+    def test_codex_role_delegation_docs_match_current_contract(self):
+        for path in (ROOT/"Agent.md", ROOT/".codex/README.md", ROOT/"docs/architecture/agent-runtime.md"):
+            text=path.read_text(encoding="utf-8")
+            self.assertIn("agent_type",text,path)
+            self.assertNotIn("没有 role/agent_type",text,path)
     def test_open_code_v2_and_read_only_roles(self):
         for role in self.registry["roles"]:
             text=(ROOT/".opencode/agents"/(role["id"]+".md")).read_text(encoding="utf-8")
