@@ -1,0 +1,332 @@
+{
+  "version": "0.2.0",
+  "date": "2026-11-17",
+  "source_of_truth": "agents/registry.json",
+  "generator": "scripts/sync_agents.py",
+  "platforms": [
+    "opencode",
+    "claude",
+    "codex",
+    "pi"
+  ],
+  "roles": [
+    {
+      "id": "math-conductor",
+      "skill": "math-teacher-pipeline",
+      "stage": "orchestrate",
+      "mode": "primary",
+      "access": "coordinator",
+      "description": "Coordinate image-to-math-lesson tasks, delegate specialist agents, enforce G0-G5 quality gates and track genuine delivery evidence.",
+      "triggers": [
+        "新题目图片需要生成完整教学包",
+        "需要恢复中断任务或处理 Gate 阻塞"
+      ],
+      "inputs": [
+        "题目图片路径",
+        "run.json 及每阶段已存在产物"
+      ],
+      "outputs": [
+        "阶段委派记录",
+        "状态报告",
+        "经全部关卡验证的 release.json"
+      ],
+      "steps": [
+        "先运行 init 并确保输入图片与哈希真实存在",
+        "按 intake solve verify storyboard manim video ppt release 依次委派",
+        "将独立审校分配给不同上下文的 math-proof-auditor",
+        "高风险证明不得在没有真实教师批准时通过",
+        "调用各阶段脚本检查后才能放行后续阶段",
+        "如被阻塞，向正确责任 Agent 返工并保存 handoff"
+      ],
+      "stop": [
+        "不得伪造审校通过或视频存在",
+        "不得直接在宿主执行未经信任的 Manim Python"
+      ]
+    },
+    {
+      "id": "math-image-interpreter",
+      "skill": "math-image-intake",
+      "stage": "intake",
+      "mode": "subagent",
+      "access": "writer",
+      "description": "Read mathematics problem images, preserve exact Chinese and LaTeX, record diagram assumptions and OCR ambiguities for G0.",
+      "triggers": [
+        "题目图片上传/识别",
+        "OCR 数学符号或几何图存在模糊"
+      ],
+      "inputs": [
+        "input/problem.*",
+        "run.json"
+      ],
+      "outputs": [
+        "problem.json"
+      ],
+      "steps": [
+        "逐字核对题干、小问和条件范围",
+        "检查下标、上标、对数、根式、分式、全称量词和不等号",
+        "将图形中直接标注的关系与通过视觉猜测的关系分开",
+        "把无法辨认的字符录入 ambiguities 及候选读法",
+        "保存 problem.json 并运行 G0 校验"
+      ],
+      "stop": [
+        "不允许凭空编写缺失小问",
+        "未解决歧义不得直接下发 math-solver"
+      ]
+    },
+    {
+      "id": "math-solver",
+      "skill": "math-solution",
+      "stage": "solve",
+      "mode": "subagent",
+      "access": "writer",
+      "description": "Create rigorous step-linked math solutions, motivate key substitutions and cover domains, parameters and every subquestion.",
+      "triggers": [
+        "G0 已通过并需要求解数学题",
+        "G2 审校退回需补足证明"
+      ],
+      "inputs": [
+        "problem.json",
+        "输入图片",
+        "G2 反馈（如果有）"
+      ],
+      "outputs": [
+        "solution.json",
+        "solution.md"
+      ],
+      "steps": [
+        "先检查定义域、量词与几何条件",
+        "解释核心观察与为什么选择换元或求导",
+        "各小问建立唯一 question_id，步骤建立 step_id 和 depends_on",
+        "检查参数分类、等号条件、退化情形和逆向推理",
+        "同步输出 JSON 和可教学 Markdown 并通过 G1"
+      ],
+      "stop": [
+        "不能把数值采样当严格证明",
+        "不能给自己的答案签署独立审校"
+      ]
+    },
+    {
+      "id": "math-proof-auditor",
+      "skill": "math-proof-audit",
+      "stage": "verify",
+      "mode": "subagent",
+      "access": "reviewer",
+      "description": "Independently audit a mathematics solution, derive alternative reasoning and report G2 blockers, counterexamples and proof obligations.",
+      "triggers": [
+        "G1 通过后需要独立数学证明复核",
+        "复杂证明被退回后需要复审"
+      ],
+      "inputs": [
+        "原图",
+        "problem.json",
+        "solution.json",
+        "solution.md"
+      ],
+      "outputs": [
+        "只读审校报告草案和证据建议"
+      ],
+      "steps": [
+        "用独立思路重推关键结论，不借用作者自信判断",
+        "检查定义域、参数边界、逻辑等价和未证明引理",
+        "将审校发现关联所有 step_id",
+        "寻找最小反例并记录测试无法覆盖的证明义务",
+        "对高风险证明要求真人教师真实签核",
+        "向主控给出 pass/revise/block 建议及依据"
+      ],
+      "stop": [
+        "禁止自称真人教师",
+        "禁止修改解答、audit.json 或项目文件",
+        "不能靠有限数值样本证明全称命题"
+      ]
+    },
+    {
+      "id": "math-storyboard-designer",
+      "skill": "math-storyboard",
+      "stage": "storyboard",
+      "mode": "subagent",
+      "access": "writer",
+      "description": "Convert G2-reviewed math proofs into step-linked storyboard beats with visual actions, Chinese narration and teaching goals.",
+      "triggers": [
+        "G2 已通过，准备生成视频教学分镜"
+      ],
+      "inputs": [
+        "problem.json",
+        "solution.json",
+        "audit.json"
+      ],
+      "outputs": [
+        "storyboard.json",
+        "storyboard.md"
+      ],
+      "steps": [
+        "确定学段、教学目标、常见错误和视频节奏",
+        "设计导入、观察、猜想、严格论证、迁移结构",
+        "每个镜头写 beat_id、step_ids、visual、voiceover、pedagogy、duration_s",
+        "数学公式口头读法与动画同一时刻出现",
+        "对照所有 step_id 覆盖情况完成 G3"
+      ],
+      "stop": [
+        "未通过 G2 不得开始正式教学分镜",
+        "不能用视觉直觉替代证明"
+      ]
+    },
+    {
+      "id": "math-pedagogy-reviewer",
+      "skill": "math-storyboard",
+      "stage": "storyboard-review",
+      "mode": "subagent",
+      "access": "reviewer",
+      "description": "Read-only pedagogy critic that checks storyboard clarity, student cognitive load, misconceptions and correspondence with proved steps.",
+      "triggers": [
+        "教学分镜初稿需教研二次评审"
+      ],
+      "inputs": [
+        "problem.json",
+        "solution.json",
+        "audit.json",
+        "storyboard.json"
+      ],
+      "outputs": [
+        "场景级教研复核意见"
+      ],
+      "steps": [
+        "检查学生是否知道为什么想到关键变形",
+        "核对视觉映射是否与已审核 step_id 一致",
+        "检验是否存在以图代证、过密文本或不恰当术语",
+        "提出具体提问、暂停和例题迁移的改进建议",
+        "区分必须返工的阻塞与可选风格建议"
+      ],
+      "stop": [
+        "只读，不修改教学产物",
+        "不能代替独立数学审校"
+      ]
+    },
+    {
+      "id": "math-manim-engineer",
+      "skill": "math-manim",
+      "stage": "manim",
+      "mode": "subagent",
+      "access": "writer",
+      "description": "Write editable Chinese Manim Community LessonScene Python aligned with approved storyboard beats and validate G4a.",
+      "triggers": [
+        "G3 通过后需要可编辑 Manim 动画源码"
+      ],
+      "inputs": [
+        "storyboard.json",
+        "storyboard.md",
+        "solution.json"
+      ],
+      "outputs": [
+        "lesson_scene.py"
+      ],
+      "steps": [
+        "使用 Manim Community API 并定义 LessonScene 类",
+        "通过注释将代码段映射至 beat_id/step_ids",
+        "中文使用字体可控的 Text，公式使用 MathTex",
+        "避免对数零点采样、几何条件凭图猜测和未经审核的新定理",
+        "运行静态 lint 并交给隔离渲染 Agent"
+      ],
+      "stop": [
+        "不能在宿主执行模型生成代码",
+        "不把静态检查当沙箱",
+        "未真实渲染前不得声称视频已完成"
+      ]
+    },
+    {
+      "id": "math-video-renderer",
+      "skill": "math-video",
+      "stage": "video",
+      "mode": "subagent",
+      "access": "writer",
+      "description": "Render Manim inside isolated Docker or authenticated MCP, add real Chinese narration and inspect MP4 streams for G4b.",
+      "triggers": [
+        "Manim 源码已通过 G4a 且需要实际生成讲解 MP4"
+      ],
+      "inputs": [
+        "lesson_scene.py",
+        "storyboard.json",
+        "voiceover.wav 或已获授权的 TTS 产物"
+      ],
+      "outputs": [
+        "silent.mp4",
+        "lesson.mp4",
+        "渲染证据"
+      ],
+      "steps": [
+        "检查 Docker、ffmpeg 与字体环境",
+        "对不可信 Python 使用断网低权限资源受限沙箱",
+        "取得真实旁白音频并对照分镜审核",
+        "核对音画时长偏差，必要时退回分镜和配音",
+        "使用 ffprobe 检查视频轨和真实音频轨",
+        "保存成功或失败日志与实际文件路径"
+      ],
+      "stop": [
+        "无声视频不能算讲解 MP4",
+        "未运行的渲染命令不算成功",
+        "不直接运行未知 Python 于宿主机"
+      ]
+    },
+    {
+      "id": "math-practice-designer",
+      "skill": "math-practice-ppt",
+      "stage": "ppt",
+      "mode": "subagent",
+      "access": "writer",
+      "description": "Design verified foundation, transfer and challenge math exercises and build editable PowerPoint with separate teacher answers.",
+      "triggers": [
+        "已审核题解需配套课堂练习和 PPTX"
+      ],
+      "inputs": [
+        "problem.json",
+        "solution.json",
+        "audit.json"
+      ],
+      "outputs": [
+        "practice.json",
+        "practice.pptx"
+      ],
+      "steps": [
+        "设计基础、迁移、挑战三级练习，关联 step_ids",
+        "每题重新验证题目与答案，不能复制旧答案而不改解法",
+        "写练习解析、误区与建议时长",
+        "使用 build_slides.py 构建可编辑 PowerPoint 文本与形状",
+        "隔离学生练习页与教师答案页并检查 G4c"
+      ],
+      "stop": [
+        "新题未审校不得宣称正确",
+        "不宣称纯文本公式等同于原生 OMML"
+      ]
+    },
+    {
+      "id": "math-release-auditor",
+      "skill": "math-release-qa",
+      "stage": "release",
+      "mode": "subagent",
+      "access": "reviewer",
+      "description": "Read-only publication QA reviewing math audit integrity, voiced MP4, editable PPTX, source provenance and G5 release conditions.",
+      "triggers": [
+        "即将发布完整数学教学包或要求复查成品"
+      ],
+      "inputs": [
+        "原图和全部阶段文件",
+        "质量检查记录",
+        "release.json（如已有）"
+      ],
+      "outputs": [
+        "发布/阻塞建议与逐项证据"
+      ],
+      "steps": [
+        "核对原图哈希、问题小问、数学审校结果和 step_ids",
+        "核对高风险证明有真实教师审核",
+        "确认视频实际包含可播放视频轨和旁白音轨",
+        "检查 PPT 学生练习页不泄露答案，文字可编辑",
+        "审查版权、隐私和所有 SHA-256 一致性",
+        "输出包含问题严重程度、责任阶段和文件依据的 QA 决策"
+      ],
+      "stop": [
+        "只读，不能生成或自行签署 release.json",
+        "不把文件存在性当数学正确性"
+      ]
+    }
+  ]
+}
