@@ -27,7 +27,8 @@
 ## 跨平台兼容与目录
 - 单一权威技能库：`.agents/skills/<skill-id>/SKILL.md`；每个 Skill 内含 `manifest.json`、`references/`、`scripts/`、`assets/`。
 - Codex、Pi、OpenCode 可发现 `.agents/skills`；Claude 通过 `.claude/skills` 的相对符号链接使用相同目录。Windows 若不支持符号链接，见 `docs/architecture/agent-compatibility.md`。
-- OpenCode 专业子 Agent：`.opencode/agents`；其他平台通过主 Agent 依职责调用 Skill、独立审校；子 Agent 的角色不是安全边界。
+- 四平台使用原生 Agent 目录：`.opencode/agents/*.md`、`.claude/agents/*.md`、`.codex/agents/*.toml`、`.pi/agents/*.md`（Pi 需启用 Subagent 扩展及项目 Agent 范围）。
+- `agents/registry.json` 是 10 个角色的单一来源；使用 `python scripts/sync_agents.py` 生成四种配置，`--check` 检查同步，详见 `docs/architecture/agent-runtime.md`。
 - 输出写入 `workspaces/<run-id>/`（默认被 Git 忽略），不将学生个人信息、原题图片、视频或未授权题库批量提交仓库。
 
 ## 项目运行约定
