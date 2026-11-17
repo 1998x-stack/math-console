@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Independent math audit",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "problem_id",
+    "verdict",
+    "reviewer",
+    "independent_method",
+    "checks",
+    "tested_cases",
+    "human_review"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "problem_id": {
+      "type": "string"
+    },
+    "verdict": {
+      "enum": [
+        "pass",
+        "revise",
+        "block"
+      ]
+    },
+    "reviewer": {
+      "type": "object",
+      "required": [
+        "id",
+        "role",
+        "independent_from_solver"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "independent_agent",
+            "human"
+          ]
+        },
+        "independent_from_solver": {
+          "type": "boolean"
+        }
+      }
+    },
+    "independent_method": {
+      "type": "string",
+      "minLength": 10
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "passed",
+          "evidence",
+          "step_ids"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "step_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "tested_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "case",
+          "outcome"
+        ],
+        "properties": {
+          "case": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "human_review": {
+      "type": "object",
+      "required": [
+        "required",
+        "approved"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "approved": {
+          "type": "boolean"
+        },
+        "reviewer_name": {
+          "type": "string"
+        },
+        "reviewed_at": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

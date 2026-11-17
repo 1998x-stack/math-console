@@ -1,0 +1,11 @@
+# User-provided problems, images, generated media and potentially sensitive work
+workspaces/
+output/
+*.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+.env.*
+!.env.example
+.DS_Store

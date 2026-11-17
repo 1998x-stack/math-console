@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Storyboard",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "problem_id",
+    "lesson_title",
+    "learning_objectives",
+    "beats"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "problem_id": {
+      "type": "string"
+    },
+    "lesson_title": {
+      "type": "string"
+    },
+    "learning_objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "beats": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "step_ids",
+          "visual",
+          "voiceover",
+          "pedagogy",
+          "duration_s"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "step_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visual": {
+            "type": "string",
+            "minLength": 1
+          },
+          "voiceover": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pedagogy": {
+            "type": "string",
+            "minLength": 1
+          },
+          "duration_s": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "transition": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
