@@ -34,6 +34,9 @@
 - 输出写入 `workspaces/<run-id>/`（默认被 Git 忽略），不将学生个人信息、原题图片、视频或未授权题库批量提交仓库。
 
 ## 项目运行约定
+
+环境要求 **Python 3.11+**（CI 与验收使用 3.12；`scripts/sync_agents.py` 依赖 `tomllib`）。
+
 ```bash
 python -m pip install -r requirements-workbench.txt
 python scripts/math_console.py init --image /path/to/problem.png --run workspaces/demo

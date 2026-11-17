@@ -30,5 +30,6 @@
     "导数",
     "单调性"
   ],
-  "risk_level": "standard"
+  "risk_level": "standard",
+  "risk_rationale": "示例：本题为含参数的单调性讨论，若含证明义务必须改为 high 并要求教师签核。"
 }

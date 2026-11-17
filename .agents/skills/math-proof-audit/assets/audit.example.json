@@ -1,11 +1,12 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "problem_id": "replace-with-real-id",
   "verdict": "block",
   "reviewer": {
     "id": "independent-reviewer",
     "role": "independent_agent",
-    "independent_from_solver": true
+    "independent_from_solver": true,
+    "context_id": "replace-with-a-context-id-distinct-from-solution.author.context_id"
   },
   "independent_method": "Replace with a separate derivation, not the solver's wording",
   "checks": [

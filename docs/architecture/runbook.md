@@ -2,7 +2,7 @@
 
 ## 1. Agent 客户端调用
 
-**Codex**：在仓库根目录启动，输入“使用 `$math-teacher-pipeline`，对 `/path/to/problem.png` 开始新任务，按 Gate 顺序生成教学包；数学审校委派独立上下文。”
+**Codex**：在仓库根目录启动（并确认信任该项目，否则 `.codex/config.toml` 不生效），输入“使用 `math-teacher-pipeline`，对 `/path/to/problem.png` 开始新任务，按 Gate 顺序生成教学包；**另开一个独立上下文**，要求按 `.agents/skills/math-proof-audit/SKILL.md` 独立重推”。注意：Codex 的 `spawn_agent` 没有 role/agent_type 参数，无法点名 `math-proof-auditor`，只能靠任务描述与 Skill 路径约束角色行为；详见 `.codex/README.md`。
 
 **OpenCode**：在根目录使用 `@math-conductor`，要求调用 `math-teacher-pipeline`；数学证明复核优先由 `math-proof-auditor` 单独执行。
 
@@ -23,6 +23,10 @@ python scripts/math_console.py status --run workspaces/example-001
 python scripts/math_console.py check --stage intake --run workspaces/example-001
 ```
 
+> **Python 版本：** 必须使用 **Python 3.11+**（CI 与本地验收使用 3.12）。`scripts/sync_agents.py` 和 Codex TOML 测试依赖标准库 `tomllib`；若用 3.9/3.10，脚本会以退出码 2 明确提示版本要求，而不是抛出裸 `ImportError`。macOS 上系统自带的 `/usr/bin/python3` 通常是 3.9，请用 `python3.12` 运行，例如 `python3.12 -m unittest discover -s tests -v`。
+
+> **Gate 契约版本（v0.2）：** `solution.schema.json` 与 `audit.schema.json` 已升级到 `schema_version: 0.2.0`。新增要求：解答必须声明 `author`（`agent_id`/`context_id`/`route`），审校必须声明 `reviewer.context_id`，且 G2 会拒绝**同上下文或同 Agent 自我审校**；`risk_level=standard` 需要 `risk_rationale`，任一步骤标记 `proof_obligation` 则强制高风险并要求教师签核。旧的 0.1.0 产物会被明确拒绝，需要补齐字段。
+
 ## 3. 机器可读状态与异常处理
 
 `[PASS]` 仅表明检查脚本当前能观察到的结构/文件条件已满足；`[BLOCKED]` 表明不允许继续交付。Conductor 应将原因反馈到相应 Skill，而不是手动更改 `audit.json` 的 verdict 跳过质量门禁。
@@ -35,7 +39,7 @@ python scripts/math_console.py check --stage intake --run workspaces/example-001
 
 1. 可解析图片并正确识别符号与每个小问。
 2. 复杂证明若无人工签核，`verify` 明确阻塞。
-3. 未制作旁白时无声 MP4 不通过 `video`。
+3. 未制作旁白时无声 MP4 不通过 `video`（`check_video` 用 ffmpeg volumedetect 测量音轨峰值，接近静音即阻塞）。
 4. PPT 保持答案与学生题面隔离且文字可编辑。
 5. CI 运行九个 Skill 的 manifest 与符号链接检查、Python 语法与单测。
 
@@ -44,7 +48,7 @@ python scripts/math_console.py check --stage intake --run workspaces/example-001
 
 - OpenCode：`.opencode/agents/math-conductor.md` 是 primary；其余 9 个角色可通过 `@math-proof-auditor` 等显式委派。使用 V2 `permissions` 格式。
 - Claude Code：`.claude/agents/*.md` 由 Agent tool 发现，支持手动命名和描述匹配。
-- Codex：`.codex/agents/*.toml` 是自定义 Agent，`.codex/config.toml` 开启多 Agent；请求按名称 spawn 对应角色。子 Agent 继承父级权限，不存在独立只读沙箱保证。
+- Codex：`.codex/agents/*.toml` 是角色规则文件，`.codex/config.toml` 的 `[agents]` 启用多 Agent（仅在受信任项目加载）。**实测 0.157.1 的 `spawn_agent` 没有 role/agent_type 参数**，所以不能“按名称 spawn 对应角色”；只能把角色 Skill 路径与任务描述一起交给新上下文。子 Agent 继承父级权限，不存在独立只读沙箱保证。
 - Pi：`.pi/agents/*.md` 必须配合项目可信 Subagent 扩展与 agentScope=project/both；没有扩展时使用 `/math-lesson` 提示模板或 Skills 串行调用。
 
 上述原生文件由 `agents/registry.json` 唯一生成：

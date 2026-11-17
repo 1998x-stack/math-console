@@ -14,7 +14,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.1.0"
+      "const": "0.2.0"
     },
     "problem_id": {
       "type": "string"
@@ -31,7 +31,8 @@
       "required": [
         "id",
         "role",
-        "independent_from_solver"
+        "independent_from_solver",
+        "context_id"
       ],
       "properties": {
         "id": {
@@ -46,6 +47,11 @@
         },
         "independent_from_solver": {
           "type": "boolean"
+        },
+        "context_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must differ from solution.author.context_id. Enforced at G2."
         }
       }
     },

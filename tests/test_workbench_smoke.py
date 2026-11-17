@@ -23,12 +23,15 @@ class WorkbenchSmokeTest(unittest.TestCase):
                 "source": {"image_paths": ["input/problem.png"], "language": "zh-CN"},
                 "stem": {"text": "求 f(x)=x² 的导数", "latex": "f(x)=x^2"},
                 "questions": [{"id": "q1", "text": "求导", "latex": "f'(x)"}],
-                "ambiguities": [], "knowledge_tags": ["导数"], "risk_level": "standard"
+                "ambiguities": [], "knowledge_tags": ["导数"], "risk_level": "standard",
+                "risk_rationale": "单步幂函数求导，不涉及全称命题、参数分支或几何构造。",
             }
             (run / "problem.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
             mc.check_intake(run)
             solution = {
-                "schema_version": "0.1.0", "problem_id": "test-001",
+                "schema_version": "0.2.0", "problem_id": "test-001",
+                "author": {"agent_id": "math-solver", "context_id": "ctx-solver",
+                           "route": "幂函数求导法则"},
                 "assumptions": ["x 为实数"],
                 "steps": [{"id": "s1", "question_id": "q1", "claim": "求导", "latex": "2x",
                            "reason": "幂函数求导法则", "depends_on": []}],
@@ -40,10 +43,10 @@ class WorkbenchSmokeTest(unittest.TestCase):
             with self.assertRaises(mc.GateError):
                 mc.check_verify(run)
             audit = {
-                "schema_version": "0.1.0", "problem_id": "test-001",
+                "schema_version": "0.2.0", "problem_id": "test-001",
                 "verdict": "pass",
                 "reviewer": {"id": "independent-001", "role": "independent_agent",
-                             "independent_from_solver": True},
+                             "independent_from_solver": True, "context_id": "ctx-auditor"},
                 "independent_method": "根据导数定义独立复核，结果与幂函数法则一致",
                 "checks": [{"id": "c1", "passed": True, "evidence": "极限展开 (x+h)^2",
                             "step_ids": ["s1"]}], "tested_cases": [],

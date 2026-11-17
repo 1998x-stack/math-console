@@ -1,9 +1,16 @@
 """Cross-platform native agent declarations and release boundaries."""
 import json
 import sys
-import tomllib
 import unittest
 from pathlib import Path
+
+if sys.version_info < (3, 11):
+    raise unittest.SkipTest(
+        "需要 Python 3.11+（tomllib）才能校验 Codex 的 TOML 角色文件；请用 python3.12 -m unittest"
+    )
+
+import tomllib  # noqa: E402  # requires Python 3.11+
+
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 import sync_agents

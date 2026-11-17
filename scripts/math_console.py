@@ -12,6 +12,7 @@ import argparse
 import ast
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,10 @@ RELEASE_FILES = (
 )
 FORBIDDEN_IMPORTS = {"os", "sys", "subprocess", "socket", "requests", "httpx", "urllib", "shutil", "pathlib"}
 FORBIDDEN_CALLS = {"eval", "exec", "compile", "open", "__import__"}
+# A track whose peak stays below this level is treated as having no real narration.
+SILENCE_MAX_DBFS = -50.0
+# Minimum length of the written justification required to stay at risk_level=standard.
+MIN_RISK_RATIONALE = 10
 
 class GateError(RuntimeError):
     pass
@@ -87,6 +92,15 @@ def unique(values, name: str) -> None:
     if len(values) != len(set(values)):
         fail(f"{name} 存在重复 ID")
 
+def load_run_meta(run: Path) -> dict:
+    """run.json is not schema-validated, so missing fields must fail loudly and cleanly."""
+    info = load_json(require(run, "run.json"))
+    for field in ("run_id", "source_image", "source_sha256"):
+        if not info.get(field):
+            fail(f"run.json 缺少必需字段 {field}；请用 math_console.py init 重新初始化该工作区")
+    return info
+
+
 def check_intake(run: Path):
     problem = load_json(require(run, "problem.json"))
     schema_validate(problem, "problem.schema.json")
@@ -96,7 +110,7 @@ def check_intake(run: Path):
         source = require(run, relative, 100)
         if source.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp", ".bmp"):
             fail(f"不支持的图片格式: {source}")
-    run_info = load_json(require(run, "run.json"))
+    run_info = load_run_meta(run)
     first = safe_path(run, problem["source"]["image_paths"][0])
     if digest(first) != run_info["source_sha256"]:
         fail("原图 SHA-256 与 run.json 不符")
@@ -106,6 +120,41 @@ def check_intake(run: Path):
     if any(not x["resolved"] or not x.get("resolution") for x in problem["ambiguities"]):
         fail("存在未解决的视觉读题/题意歧义：必须先由 Agent 或教师核查")
     return problem
+
+def check_step_graph(steps: list) -> None:
+    """Reject dependency cycles and forward references between solution steps.
+
+    Without this, a solution could claim s1 <- s2 <- s1 and still be "complete".
+    Cycles are reported first because they are the more fundamental defect.
+    """
+    ids = [step["id"] for step in steps]
+    index = {sid: i for i, sid in enumerate(ids)}
+    graph = {step["id"]: [dep for dep in step["depends_on"] if dep in index]
+             for step in steps}
+    WHITE, GREY, BLACK = 0, 1, 2
+    colour = dict.fromkeys(ids, WHITE)
+
+    def visit(node: str, path: list) -> None:
+        colour[node] = GREY
+        for dep in graph[node]:
+            if colour[dep] == GREY:
+                fail(f"解答步骤依赖存在循环：{' -> '.join(path + [dep])}；推导顺序不成立")
+            if colour[dep] == WHITE:
+                visit(dep, path + [dep])
+        colour[node] = BLACK
+
+    for sid in ids:
+        if colour[sid] == WHITE:
+            visit(sid, [sid])
+
+    for step in steps:
+        for dep in step["depends_on"]:
+            if index[dep] >= index[step["id"]]:
+                fail(
+                    f"依赖必须先于使用：步骤 {step['id']} 依赖 {dep}，"
+                    f"但 {dep} 未在它之前给出；请按拓扑顺序排列步骤"
+                )
+
 
 def check_solve(run: Path):
     problem = check_intake(run)
@@ -131,6 +180,7 @@ def check_solve(run: Path):
             fail(f"步骤依赖不存在: {step['id']}")
     if not questions.issubset({s["question_id"] for s in steps}):
         fail("至少一个小问没有逐步解答")
+    check_step_graph(steps)
     return problem, solution
 
 def check_verify(run: Path):
@@ -144,12 +194,26 @@ def check_verify(run: Path):
         fail("独立审校未通过，必须返工")
     if audit.get("unresolved"):
         fail("审校仍有未解决的证明义务")
+    # Independence is more than a self-asserted flag: the author and the reviewer
+    # must be recorded as different agents working in different contexts.
+    author = solution["author"]
+    if reviewer["context_id"] == author["context_id"]:
+        fail("独立审校不成立：审校者与解题者使用同一 context_id，属于同一上下文自我审校")
+    if reviewer["id"] == author["agent_id"]:
+        fail("独立审校不成立：reviewer.id 等于 solution.author.agent_id，属于同一 Agent 自我审校")
     step_ids = {s["id"] for s in solution["steps"]}
     checked_ids = {sid for check in audit["checks"] for sid in check["step_ids"]}
     if not checked_ids.issubset(step_ids) or not step_ids.issubset(checked_ids):
         fail("审校必须覆盖全部解题步骤并引用真实 step_id")
+    # Risk must not be downgraded by whoever wrote the solution.
+    risk = problem.get("risk_level", "high")
+    proof_steps = sorted(s["id"] for s in solution["steps"] if s.get("proof_obligation"))
+    if proof_steps and risk != "high":
+        fail(f"步骤 {proof_steps} 标记了证明义务，必须按高风险处理（risk_level=high），禁止降级以跳过教师签核")
+    if risk == "standard" and len(problem.get("risk_rationale", "").strip()) < MIN_RISK_RATIONALE:
+        fail("risk_level=standard 必须提供 risk_rationale（≥10 字）说明为何不属高风险，防止自行降级")
     human = audit["human_review"]
-    if problem.get("risk_level", "high") == "high" and (not human["required"] or not human["approved"]):
+    if risk == "high" and (not human["required"] or not human["approved"]):
         fail("高风险数学证明必须有教师人工签核")
     if human["required"] and (
         not human["approved"] or not human.get("reviewer_name") or not human.get("reviewed_at")
@@ -211,6 +275,30 @@ def ffprobe(file: Path) -> dict:
     except (subprocess.SubprocessError, ValueError) as exc:
         fail(f"ffprobe 检测失败: {exc}")
 
+def audio_peak_dbfs(file: Path) -> float:
+    """Measure the peak level of the first audio stream via ffmpeg volumedetect.
+
+    ffprobe only proves that an audio *stream* exists; it cannot tell a real
+    Chinese voiceover from an anullsrc placeholder. AGENTS.md forbids shipping a
+    silent MP4 as a finished lesson, so the level must be measured, not assumed.
+    """
+    if shutil.which("ffmpeg") is None:
+        fail("缺少 ffmpeg，无法确认旁白音轨是否为静音")
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-nostats", "-i", str(file),
+             "-map", "0:a:0", "-af", "volumedetect", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=120,
+        )
+    except subprocess.SubprocessError as exc:
+        fail(f"音轨电平检测失败: {exc}")
+    match = re.search(r"max_volume:\s*(-?[\d.]+|-inf)\s*dB", proc.stderr)
+    if not match:
+        fail(f"无法测量旁白音轨电平: {proc.stderr.strip()[-300:]}")
+    raw = match.group(1)
+    return float("-inf") if raw == "-inf" else float(raw)
+
+
 def check_video(run: Path):
     check_manim(run)
     file = require(run, "lesson.mp4", 1024)
@@ -224,6 +312,12 @@ def check_video(run: Path):
         fail("MP4 不包含可用时长")
     if not 1 < length < 7200:
         fail("MP4 时长异常")
+    peak = audio_peak_dbfs(file)
+    if peak < SILENCE_MAX_DBFS:
+        fail(
+            f"讲解视频的音轨接近静音（峰值 {peak} dBFS，阈值 {SILENCE_MAX_DBFS} dBFS）："
+            "存在音频流并不等于有真实旁白，不得把无声 MP4 标记为讲解成品"
+        )
     return file, length
 
 def check_ppt(run: Path):
@@ -269,7 +363,7 @@ def status(run: Path):
 
 def do_release(run: Path):
     check_ppt(run)
-    info = load_json(require(run, "run.json"))
+    info = load_run_meta(run)
     files = {name: {"sha256": digest(require(run, name)),
                     "size_bytes": require(run, name).stat().st_size}
              for name in RELEASE_FILES}
@@ -310,6 +404,13 @@ def do_init(image: Path, run: Path):
     print(f"[INIT] {run}\n原图保存在 {target}\n请由具备视觉能力的 Agent 录入 problem.json；随后 check --stage intake")
 
 def main():
+    if sys.version_info < (3, 11):
+        print(
+            "需要 Python 3.11 或更高版本（当前 %d.%d）。本工作台按 CI 的 Python 3.12 验证；"
+            "请使用 python3.12 scripts/math_console.py 运行。" % sys.version_info[:2],
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
     init = sub.add_parser("init", help="Initialize a run from a problem image")
@@ -335,7 +436,7 @@ def main():
         else:
             check_one(args.run, args.stage)
             print(f"[PASS] {args.stage}")
-    except (GateError, OSError, ValueError) as exc:
+    except (GateError, OSError, ValueError, KeyError, TypeError) as exc:
         print(f"[BLOCKED] {exc}", file=sys.stderr)
         raise SystemExit(2) from None
 

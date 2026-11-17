@@ -8,8 +8,17 @@ import argparse
 import json
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+if sys.version_info < (3, 11):
+    print(
+        "需要 Python 3.11 或更高版本（当前 %d.%d）：本脚本依赖标准库 tomllib 来解析 "
+        "Codex 的 TOML 角色文件。请改用 python3.12 scripts/sync_agents.py。" % sys.version_info[:2],
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
+import tomllib  # noqa: E402  # requires Python 3.11+; see the guard above
 
 ROOT=Path(__file__).resolve().parents[1]
 REGISTRY=ROOT/"agents/registry.json"

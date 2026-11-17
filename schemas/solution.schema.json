@@ -5,17 +5,42 @@
   "required": [
     "schema_version",
     "problem_id",
+    "author",
     "assumptions",
     "steps",
     "results"
   ],
   "properties": {
     "schema_version": {
-      "const": "0.1.0"
+      "const": "0.2.0"
     },
     "problem_id": {
       "type": "string",
       "minLength": 1
+    },
+    "author": {
+      "type": "object",
+      "description": "Who produced this solution. Used at G2 to reject self-audit.",
+      "required": [
+        "agent_id",
+        "context_id",
+        "route"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route": {
+          "type": "string",
+          "minLength": 4,
+          "description": "The reasoning route actually used, e.g. 定义法 / 链式法则."
+        }
+      }
     },
     "assumptions": {
       "type": "array",
@@ -59,6 +84,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "proof_obligation": {
+            "type": "boolean",
+            "description": "True when this step is a proof, not a computation. Forces risk_level=high at G2."
           }
         }
       }

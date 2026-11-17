@@ -40,10 +40,10 @@ G0 识图 → G1 规范求解 → G2 独立证明审校 → G3 分镜 → G3+ �
 
 - **G0**：由具备原生多模态视觉能力的 Agent **直接查看原始图片并理解题干与几何示意图**；不建立 OCR / Python 图片解析脚本。数学上下标、分式、参数范围、几何图标记有歧义时不能进入 G1。脚本仅辅助校验已由 Agent 输出的结构化内容。
 - **G1**：必须每小问都有结论，每一步有 reason、step_id、依赖关系。
-- **G2**：作者与独立审校者必须是不同 Agent/上下文；高风险证明必须真实教师批准。脚本只能审查字段，不能证明命题本身。
+- **G2**：作者与独立审校者必须是不同 Agent/上下文；脚本会校验 `solution.author.context_id` 与 `audit.reviewer.context_id`（及 agent_id）确实不同，但**这仍然只是结构性约束，不是独立性的证明**。高风险证明必须真实教师批准。脚本只能审查字段，不能证明命题本身。
 - **G3**：分镜场景必须追溯已审核的 step_ids；直观动画不可当严格证明。
 - **G4a**：交付可以修改的 Manim Community Python；AST 静态检查不是安全沙箱。
-- **G4b**：真实执行 Docker/MCP 渲染，生成带实际音轨的 MP4；仅有视频轨或命令行预览不能发布。
+- **G4b**：真实执行 Docker/MCP 渲染，生成带实际音轨的 MP4；仅有视频轨、或音轨峰值接近静音，都不能发布（`check_video` 会用 ffmpeg volumedetect 测量峰值）。
 - **G4c**：练习题重新审核，PPTX 学生页不得泄露答案，教师页给出分步解析。
 - **G5**：发布报告包含真实文件哈希，不能签发未实际生成的 MP4 或教师审批。
 
@@ -75,7 +75,14 @@ Handoff 的 JSON Schema 只保证数据形状，不保证证据真实，也不�
 
 **Claude Code**：通过 .claude/agents/*.md 的 name、description、tools 发现与委派。专业审校仅赋予 Read/Grep/Glob，避免修改证据。但基础模型仍然可能判断错误，需要人工质检。
 
-**Codex**：通过 .codex/agents/*.toml 定义，项目 .codex/config.toml 配置 agents.enabled。Codex 自定义角色继承父级权限与沙箱，不允许凭角色提示假称严格只读；需启用实际多 Agent 工具才能获得独立上下文。
+**Codex**：通过 .codex/agents/*.toml 定义角色规则文件，项目 .codex/config.toml 的 `[agents]` 配置多 Agent（`enabled`、`max_concurrent_threads_per_session`），**仅在受信任项目加载**。实测 codex-cli 0.157.1：`spawn_agent(task_name, message, fork_turns, model, reasoning_effort)` 可以开启独立上下文的子 Agent，但**没有 role/agent_type 参数，也不向模型暴露可选角色**；因此不能靠点名 `math-proof-auditor` 来触发该文件，只能把角色 Skill 路径与任务描述一起交给新上下文。自定义角色继承父级权限与沙箱，不允许凭角色提示假称严格只读。
+
+**Codex 委派自查（可复现）：**
+
+```bash
+codex doctor | grep -A6 '^Configuration'   # 确认项目 config.toml 是否被加载
+codex exec -m gpt-6-luna "列出 spawn_agent 的精确参数名；没有 role/agent_type 就说没有"
+```
 
 **Pi**：.pi/agents/*.md 为兼容官方示例 Subagent 扩展的角色数据。默认 Pi 不自动扫描并运行项目子 Agent，须选择信任该项目并配置扩展 agentScope。未启用扩展时可用 prompt/Skill 主动编排，但不能声称自动实现了独立数学审查。
 

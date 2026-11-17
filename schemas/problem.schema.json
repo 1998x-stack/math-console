@@ -130,6 +130,11 @@
         "standard",
         "high"
       ]
+    },
+    "risk_rationale": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Why this problem is NOT high risk. Required for risk_level=standard; enforced at G2."
     }
   }
 }
