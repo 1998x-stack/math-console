@@ -1,0 +1,79 @@
+{
+  "version": "0.1.0",
+  "policy": "agent_native_vision_only",
+  "status": "original_fixture_not_yet_benchmarked",
+  "cases": [
+    {
+      "id": "derivative",
+      "file": "cases/derivative.svg",
+      "category": "function_derivative",
+      "grade": "高中",
+      "question_count": 3,
+      "expected": [
+        {
+          "question": "q1",
+          "math": "f'_a(x)=2x-2a"
+        },
+        {
+          "question": "q2",
+          "math": "a=1 时最小值为 0，取到点 x=1"
+        },
+        {
+          "question": "q3",
+          "math": "f_a(x)=(x-a)^2+1-a^2≥1-a^2"
+        }
+      ],
+      "visual_traps": [
+        "下标 a",
+        "任意量词",
+        "证明与计算的区别"
+      ],
+      "review_status": "pending_real_agent_run"
+    },
+    {
+      "id": "analytic-geometry",
+      "file": "cases/analytic-geometry.svg",
+      "category": "analytic_geometry",
+      "grade": "高中",
+      "question_count": 2,
+      "expected": [
+        {
+          "question": "q1",
+          "math": "(1+√2,1-√2) 与 (1-√2,1+√2)"
+        },
+        {
+          "question": "q2",
+          "math": "圆心 (1,1) 满足 x+y=2，直线通过圆心"
+        }
+      ],
+      "visual_traps": [
+        "坐标与几何图条件分离",
+        "示意图不能代替代数"
+      ],
+      "review_status": "pending_real_agent_run"
+    },
+    {
+      "id": "solid-geometry",
+      "file": "cases/solid-geometry.svg",
+      "category": "solid_geometry",
+      "grade": "高中",
+      "question_count": 2,
+      "expected": [
+        {
+          "question": "q1",
+          "math": "AC₁=2√3"
+        },
+        {
+          "question": "q2",
+          "math": "tanθ=CC₁/AC=1/√2"
+        }
+      ],
+      "visual_traps": [
+        "下标 ₁",
+        "空间对角线与底面投影",
+        "隐藏线不构成附加条件"
+      ],
+      "review_status": "pending_real_agent_run"
+    }
+  ]
+}

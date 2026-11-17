@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="610" viewBox="0 0 960 610">
+<rect width="960" height="610" fill="#fff"/><rect width="960" height="13" fill="#285d87"/>
+<text x="55" y="76" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="32" fill="#24364c">原创测试题 C · 立体几何</text>
+<text x="55" y="148" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="26" fill="#172b4d">在正方体 ABCD−A₁B₁C₁D₁ 中，棱长为 2。</text>
+<text x="55" y="229" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="24" fill="#172b4d">(1) 求空间对角线 AC₁ 的长度。</text>
+<text x="55" y="303" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="24" fill="#172b4d">(2) 求直线 AC₁ 与底面 ABCD</text>
+<text x="100" y="340" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="24" fill="#172b4d">所成角的正切值。</text>
+<g stroke="#3c7894" fill="none" stroke-width="3">
+<path d="M520 490 L730 490 L815 385 L605 385 Z"/>
+<path d="M520 290 L730 290 L815 185 L605 185 Z"/>
+<path d="M520 490 L520 290 M730 490 L730 290 M815 385 L815 185 M605 385 L605 185"/>
+</g>
+<path d="M520 490 L815 185" stroke="#cc6440" stroke-width="5" fill="none"/>
+<g font-size="21" fill="#1e3448">
+<text x="491" y="514">A</text><text x="731" y="518">B</text><text x="825" y="391">C</text><text x="583" y="406">D</text>
+<text x="483" y="285">A₁</text><text x="733" y="288">B₁</text><text x="823" y="182">C₁</text><text x="573" y="177">D₁</text>
+</g>
+<text x="560" y="578" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="18" fill="#667788">红线表示 AC₁；图为示意。</text>
+</svg>

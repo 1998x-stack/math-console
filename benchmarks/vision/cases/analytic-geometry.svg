@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600">
+<rect width="960" height="600" fill="#fff"/><rect width="960" height="13" fill="#285d87"/>
+<text x="60" y="75" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="32" fill="#24364c">原创测试题 B · 解析几何</text>
+<text x="60" y="143" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="26" fill="#172b4d">已知圆 C：(x − 1)² + (y − 1)² = 4，</text>
+<text x="60" y="190" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="26" fill="#172b4d">直线 l：x + y = 2。</text>
+<text x="60" y="275" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="25" fill="#172b4d">(1) 求直线 l 与圆 C 的交点坐标。</text>
+<text x="60" y="341" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="25" fill="#172b4d">(2) 判断 l 是否经过圆心，并说明理由。</text>
+<line x1="570" y1="470" x2="899" y2="470" stroke="#8394a6" stroke-width="2"/><line x1="670" y1="545" x2="670" y2="210" stroke="#8394a6" stroke-width="2"/>
+<polygon points="899,470 884,462 884,478" fill="#8394a6"/><polygon points="670,210 662,225 678,225" fill="#8394a6"/>
+<circle cx="725" cy="405" r="105" stroke="#257c94" stroke-width="4" fill="none"/>
+<line x1="575" y1="255" x2="875" y2="555" stroke="#d07735" stroke-width="4"/>
+<circle cx="725" cy="405" r="5" fill="#257c94"/><text x="739" y="393" font-size="18" fill="#257c94">C(1,1)</text>
+<text x="861" y="534" font-size="21" fill="#d07735">l</text><text x="892" y="464" font-size="17" fill="#667788">x</text><text x="680" y="224" font-size="17" fill="#667788">y</text>
+<text x="60" y="515" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="18" fill="#667788">图为示意，数学条件以题面为准。</text>
+</svg>

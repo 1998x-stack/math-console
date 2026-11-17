@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560">
+<rect width="960" height="560" fill="#fff"/>
+<rect x="0" y="0" width="960" height="13" fill="#285d87"/>
+<text x="60" y="82" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="32" fill="#24364c">原创测试题 A · 函数与导数</text>
+<text x="60" y="150" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="30" fill="#172b4d">设 fₐ(x) = x² − 2ax + 1，其中 a ∈ ℝ。</text>
+<text x="60" y="237" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="28" fill="#172b4d">(1) 求函数 fₐ(x) 的导数。</text>
+<text x="60" y="314" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="28" fill="#172b4d">(2) 当 a = 1 时，求 fₐ(x) 的最小值及对应的 x。</text>
+<text x="60" y="391" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="28" fill="#172b4d">(3) 证明：对任意 a, x ∈ ℝ，fₐ(x) ≥ 1 − a²。</text>
+<line x1="60" x2="900" y1="448" y2="448" stroke="#d7dee8" stroke-width="2"/>
+<text x="60" y="496" font-family="Noto Sans CJK SC, PingFang SC, sans-serif" font-size="20" fill="#65758a">注意：题目含下标、量词、证明题，要求 Agent 原生视觉理解。</text>
+</svg>
