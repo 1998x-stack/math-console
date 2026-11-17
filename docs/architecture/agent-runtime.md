@@ -40,7 +40,7 @@ G0 识图 → G1 规范求解 → G2 独立证明审校 → G3 分镜 → G3+ �
 
 - **G0**：由具备原生多模态视觉能力的 Agent **直接查看原始图片并理解题干与几何示意图**；不建立 OCR / Python 图片解析脚本。数学上下标、分式、参数范围、几何图标记有歧义时不能进入 G1。脚本仅辅助校验已由 Agent 输出的结构化内容。
 - **G1**：必须每小问都有结论，每一步有 reason、step_id、依赖关系。
-- **G2**：作者与独立审校者必须是不同 Agent/上下文；脚本会校验 `solution.author.context_id` 与 `audit.reviewer.context_id`（及 agent_id）确实不同，但**这仍然只是结构性约束，不是独立性的证明**。高风险证明必须真实教师批准。脚本只能审查字段，不能证明命题本身。
+- **G2**：作者与独立审校者必须是不同 Agent/上下文；脚本会校验 `solution.author.context_id` 与 `audit.reviewer.context_id`（及 agent_id）确实不同，但**这仍然只是结构性约束，不是独立性的证明**。高风险证明的教师签名在新工作区默认策略 auto_waiver 下豁免等待，但不构成真实教师批准；strict 模式要求真实审核。脚本只能审查字段，不能证明命题本身。
 - **G3**：分镜场景必须追溯已审核的 step_ids；直观动画不可当严格证明。
 - **G4a**：交付可以修改的 Manim Community Python；AST 静态检查不是安全沙箱。
 - **G4b**：真实执行 Docker/MCP 渲染，生成带实际音轨的 MP4；仅有视频轨、或音轨峰值接近静音，都不能发布（`check_video` 会用 ffmpeg volumedetect 测量峰值）。

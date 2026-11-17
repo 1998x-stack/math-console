@@ -83,10 +83,14 @@ python .agents/skills/math-practice-ppt/scripts/build_slides.py --run workspaces
 python scripts/math_console.py release --run workspaces/lesson-001
 ```
 
-**必须重视：** G2 审校通过前不能生产课堂发布视频；高风险证明需要真人教师签核。Manim Python 来源于模型生成，不得在未隔离的主机执行。仅有结构校验、符号抽样或 ffprobe 检测均不代表教学内容已被数学上证明正确。
+**必须重视：** G2 独立数学审校通过前不能生产课堂发布视频。高风险题默认按 `auto_waiver` 免教师签字阻塞，但不能伪称真人教师已审核；`strict` 策略要求真实签核证据。Manim Python 来源于模型生成，不得在未隔离的主机执行。仅有结构校验、符号抽样或 ffprobe 检测均不代表教学内容已被数学上证明正确。
 
 ## Codex 本地深度迭代
 
 本地 Codex 可直接使用 [主控深度迭代 Prompt](prompts/codex/deep-iteration.md) 进行 Agent/Skill 框架审计、真实题目 E2E、质量门禁测试与分阶段修复；下一轮使用 [继续迭代 Prompt](prompts/codex/continue-iteration.md)。完整启动命令见 [Codex Prompt 使用说明](prompts/codex/README.md)。
 
 **G2 与「有声」的可执行约束（v0.2）：** `solution.json` 与 `audit.json` 已升级为 `schema_version 0.2.0`。解答必须声明 `author.agent_id` / `author.context_id` / `author.route`，审校必须声明 `reviewer.context_id`；`check --stage verify` 会**拒绝同上下文或同 Agent 的自我审校**，`risk_level=standard` 必须附 `risk_rationale`，任一步骤标记 `proof_obligation` 即强制高风险并要求教师签核。`check --stage video` 会用 ffmpeg volumedetect 测量音轨峰值，**接近静音的 MP4 一律阻塞**。这些约束能把「无法证明的声明」变成显式失败，但仍不是数学证明或独立性证明。
+
+### 默认教师签核策略
+
+新工作区默认为 `auto_waiver`：独立数学审校 G2 通过后，无需等待人工签名。`release.json` 会记录 `waived_by_default_policy`，这不是教师本人签字。需要严格真人确认时用 `math_console.py init --teacher-review-policy strict`，最终发布还需 `teacher-approval.json` 绑定全部交付物哈希。

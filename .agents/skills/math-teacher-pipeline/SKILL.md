@@ -17,7 +17,7 @@ Orchestrate an image-to-verified-math-lesson workflow; use for end-to-end image,
 2. 为保留溯源，可执行 `python scripts/math_console.py init --image <picture> --run workspaces/<id>` 仅复制图片并计算哈希；这不是图像解析步骤，也不是看图的前置条件。
 3. 按 math-image-intake 规范由真正看到图像的 Agent 自行生成 `problem.json`；再用只检查 JSON/文件的 G0 检验结构，**不能以脚本检查通过代替题目理解或人工核对**。
 4. 加载 math-solution 生成 solution.json、solution.md；完成 G1。
-5. 将题目和解答交给**独立审校者**，加载 math-proof-audit；完成 G2。若证明存在难点或风险等级为 high，获取真人教师签核。
+5. 将题目和解答交给**独立审校者**，加载 math-proof-audit；完成 G2。若属于高风险证明，保留人工审阅义务；默认 auto_waiver 策略不等教师签字即可继续（但不伪称真人批准），strict 策略必须有真人签核。
 6. 只有 G2 pass 后，按顺序加载 math-storyboard、math-manim、math-video、math-practice-ppt。
 7. 加载 math-release-qa；在验证通过后由 CLI 生成 release.json 和文件哈希。报告完成/缺失和阻塞原因。
 

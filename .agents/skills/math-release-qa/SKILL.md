@@ -33,3 +33,7 @@ Audit all math-teaching deliverables, require genuine verified solution, storybo
 - `manifest.json`：独立版本号、契约与依赖记录。
 
 > 遇到不完整的产物或不可信的数学证明，标记 blocked 并返工；禁止虚构真实渲染、人工审校或旁白生成。
+
+## 教师签核默认语义
+
+新工作区默认 auto_waiver：这是免等待人工签字的策略放行，不能冒充真人批准。strict 模式要求真实教师声明文件并核对所有发布物 SHA-256。G2 独立审校、真实旁白和发布哈希检查不受影响。

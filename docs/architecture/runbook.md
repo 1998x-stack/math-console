@@ -2,7 +2,7 @@
 
 ## 1. Agent 客户端调用
 
-**Codex**：在仓库根目录启动（并确认信任该项目，否则 `.codex/config.toml` 不生效），输入“使用 `math-teacher-pipeline`，对 `/path/to/problem.png` 开始新任务，按 Gate 顺序生成教学包；**另开一个独立上下文**，要求按 `.agents/skills/math-proof-audit/SKILL.md` 独立重推”。注意：Codex 的 `spawn_agent` 没有 role/agent_type 参数，无法点名 `math-proof-auditor`，只能靠任务描述与 Skill 路径约束角色行为；详见 `.codex/README.md`。
+**Codex**：在仓库根目录启动（并确认信任该项目，否则 `.codex/config.toml` 不生效），输入“使用 `math-teacher-pipeline`，对 `/path/to/problem.png` 开始新任务，按 Gate 顺序生成教学包；**另开一个独立上下文**，要求按 `.agents/skills/math-proof-audit/SKILL.md` 独立重推”。注意：最近的 Codex 会话实际支持 `collaboration.spawn_agent(agent_type=...)` 选择专业角色；不同版本可能不同，以当前工具契约为准，详见 `.codex/README.md`。
 
 **OpenCode**：在根目录使用 `@math-conductor`，要求调用 `math-teacher-pipeline`；数学证明复核优先由 `math-proof-auditor` 单独执行。
 
@@ -55,7 +55,7 @@ python .agents/skills/math-video/scripts/render_docker.py --run workspaces/examp
 ## 5. 最小验收标准
 
 1. 可解析图片并正确识别符号与每个小问。
-2. 复杂证明若无人工签核，`verify` 明确阻塞。
+2. 复杂证明仍必须独立数学审校；默认 auto_waiver 可不等教师签字，strict 模式无真实签核时阻塞。
 3. 未制作旁白时无声 MP4 不通过 `video`（`check_video` 用 ffmpeg volumedetect 测量音轨峰值，接近静音即阻塞）；分镜声明时长与成片时长必须一致。
 4. PPT 保持答案与学生题面隔离且文字可编辑（按页首分区取证，三层题型齐备）。
 5. CI 运行九个 Skill 的 manifest 与符号链接检查、Python 语法与单测。
@@ -65,7 +65,7 @@ python .agents/skills/math-video/scripts/render_docker.py --run workspaces/examp
 
 - OpenCode：`.opencode/agents/math-conductor.md` 是 primary；其余 9 个角色可通过 `@math-proof-auditor` 等显式委派。使用 V2 `permissions` 格式。
 - Claude Code：`.claude/agents/*.md` 由 Agent tool 发现，支持手动命名和描述匹配。
-- Codex：`.codex/agents/*.toml` 是角色规则文件，`.codex/config.toml` 的 `[agents]` 启用多 Agent（仅在受信任项目加载）。**实测 0.157.1 的 `spawn_agent` 没有 role/agent_type 参数**，所以不能“按名称 spawn 对应角色”；只能把角色 Skill 路径与任务描述一起交给新上下文。子 Agent 继承父级权限，不存在独立只读沙箱保证。
+- Codex：`.codex/agents/*.toml` 是角色规则文件，`.codex/config.toml` 的 `[agents]` 启用多 Agent（仅在受信任项目加载）。后来的实际 Codex 会话支持 `collaboration.spawn_agent` 的 `agent_type` 参数与专业 Agent 枚举；其他版本可能不同，须检查当前工具契约。子 Agent 继承父级权限，不存在独立只读沙箱保证。
 - Pi：`.pi/agents/*.md` 必须配合项目可信 Subagent 扩展与 agentScope=project/both；没有扩展时使用 `/math-lesson` 提示模板或 Skills 串行调用。
 
 上述原生文件由 `agents/registry.json` 唯一生成：
@@ -76,3 +76,7 @@ python -m unittest discover -s tests -p 'test_agent_profiles.py' -v
 ~~~
 
 角色责任、Gate 转移和失败回滚见 `docs/architecture/agent-runtime.md`。
+
+## 教师签核配置
+
+默认 `--teacher-review-policy auto_waiver`：只免人工签字阻塞，并将结果写为策略放行，不伪造真人签名。选择 `--teacher-review-policy strict` 时，最终必须提供真的 `teacher-approval.json`，且其哈希清单覆盖全部发布文件。
