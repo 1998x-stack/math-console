@@ -1,0 +1,48 @@
+name: Validate math teacher agent skills
+on:
+  push:
+    paths:
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.agents/**'
+      - '.claude/**'
+      - '.opencode/**'
+      - 'scripts/**'
+      - 'schemas/**'
+      - 'tests/**'
+      - 'requirements-workbench.txt'
+      - '.github/workflows/validate-agent-skills.yml'
+  pull_request:
+    paths:
+      - '.agents/**'
+      - '.claude/**'
+      - 'scripts/**'
+      - 'schemas/**'
+      - 'tests/**'
+      - 'requirements-workbench.txt'
+  workflow_dispatch:
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deterministic validation dependencies
+        run: python -m pip install -r requirements-workbench.txt
+      - name: Check all Skills, manifests, references, scripts and symlinks
+        run: python scripts/validate_skill_manifests.py
+      - name: Check Python syntax
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          for p in [*Path("scripts").rglob("*.py"), *Path(".agents/skills").rglob("*.py"), *Path("tests").rglob("*.py")]:
+              ast.parse(p.read_text(encoding="utf-8"), filename=str(p))
+              print("OK", p)
+          PY
+      - name: Smoke test blocked and valid transitions
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
