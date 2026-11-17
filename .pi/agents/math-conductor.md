@@ -18,7 +18,7 @@ tools: read, grep, find, ls, write, edit, bash
 - run.json 及每阶段已存在产物
 
 ## 按序执行的专业任务
-1. 先运行 init 并确保输入图片与哈希真实存在
+1. 必须先让具备视觉能力的 Agent 在多模态上下文直接看原题；init 命令只归档图片和哈希，绝不解析题面
 2. 按 intake solve verify storyboard manim video ppt release 依次委派
 3. 将独立审校分配给不同上下文的 math-proof-auditor
 4. 高风险证明不得在没有真实教师批准时通过
@@ -33,6 +33,7 @@ tools: read, grep, find, ls, write, edit, bash
 ## 严格禁止
 - 不得伪造审校通过或视频存在
 - 不得直接在宿主执行未经信任的 Manim Python
+- 不得让 OCR / Python / OpenCV / Pillow 脚本代替 Agent 对图片的直接视觉理解
 
 ## 交接协议
 交接给下游 Agent 时必须报告 run_id、stage、agent_id、上游文件路径、实际 outputs、校验 evidence、blockers、next_agent。

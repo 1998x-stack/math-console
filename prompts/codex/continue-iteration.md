@@ -1,3 +1,5 @@
+> **视觉任务规则（本轮仍然有效）：上传的数学题图片由 Codex 自身的多模态视觉能力直接理解，不允许编写或调用 OCR/Python/Pillow/OpenCV 等图片解析脚本。图片初始化/哈希脚本不是视觉识题。**
+
 # Math Console · Codex 后续迭代 Prompt
 
 请先读取本仓库 prompts/codex/deep-iteration.md 和上一轮实际执行报告。现在继续进行下一轮**基于测试证据的增量迭代**，不要从头重写项目或只输出建议。

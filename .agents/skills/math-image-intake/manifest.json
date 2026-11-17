@@ -1,10 +1,10 @@
 {
   "id": "math-image-intake",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "schema_version": "0.1.0",
   "stage": "intake",
   "title": "题目图片识别与结构化录入",
-  "description": "Transcribe a mathematics problem image with exact LaTeX, subquestion IDs, diagrams and ambiguity tracking; use before attempting any solution.",
+  "description": "Agent-native multimodal understanding of math problem images, formulas, figures and subquestions; no OCR or image-parsing scripts.",
   "owner_role": "specialist-agent",
   "inputs": [
     "run.json",
@@ -14,11 +14,11 @@
     "problem.json"
   ],
   "prerequisites": [
-    "原题图片、引用来源与年级",
-    "允许保留题干原有的简体中文与 LaTeX，不得凭空补充小问"
+    "原始图片必须在当前多模态 Agent 上下文真实可见；如果子 Agent 不可见，改由能看图的主 Agent 处理",
+    "不依赖 OCR、Python、Pillow、OpenCV 或第三方图片转文字服务来理解题目"
   ],
   "gates": [
-    "任何 OCR 模糊、符号歧义或题面缺失不得静默推断。"
+    "G0 由 Agent 负责视觉内容判断：任何模糊公式、几何条件和不完整小问不能静默猜测；check_problem.py 只做结构校验"
   ],
   "references": [
     "references/transcription-standard.md"

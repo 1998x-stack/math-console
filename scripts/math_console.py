@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Math Console lesson-package state machine (Python 3.11+).
 
+Image understanding belongs exclusively to a multimodal Agent; this script never
+extracts mathematical text, diagrams or meaning from an image.
 This validates structure and artifact integrity, NOT mathematical truth.
 Independent mathematical review is a separate mandatory checkpoint.
 """
@@ -102,7 +104,7 @@ def check_intake(run: Path):
         fail("problem.json 声称的原图哈希不符")
     unique([q["id"] for q in problem["questions"]], "question")
     if any(not x["resolved"] or not x.get("resolution") for x in problem["ambiguities"]):
-        fail("存在未解决的 OCR/题意歧义：必须先人工核查")
+        fail("存在未解决的视觉读题/题意歧义：必须先由 Agent 或教师核查")
     return problem
 
 def check_solve(run: Path):

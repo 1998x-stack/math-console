@@ -31,7 +31,7 @@
         "经全部关卡验证的 release.json"
       ],
       "steps": [
-        "先运行 init 并确保输入图片与哈希真实存在",
+        "必须先让具备视觉能力的 Agent 在多模态上下文直接看原题；init 命令只归档图片和哈希，绝不解析题面",
         "按 intake solve verify storyboard manim video ppt release 依次委派",
         "将独立审校分配给不同上下文的 math-proof-auditor",
         "高风险证明不得在没有真实教师批准时通过",
@@ -40,7 +40,8 @@
       ],
       "stop": [
         "不得伪造审校通过或视频存在",
-        "不得直接在宿主执行未经信任的 Manim Python"
+        "不得直接在宿主执行未经信任的 Manim Python",
+        "不得让 OCR / Python / OpenCV / Pillow 脚本代替 Agent 对图片的直接视觉理解"
       ]
     },
     {
@@ -49,28 +50,29 @@
       "stage": "intake",
       "mode": "subagent",
       "access": "writer",
-      "description": "Read mathematics problem images, preserve exact Chinese and LaTeX, record diagram assumptions and OCR ambiguities for G0.",
+      "description": "Directly understand math problem images with the agent's native multimodal vision, recording exact formulas, subquestions and geometric annotations without OCR scripts.",
       "triggers": [
-        "题目图片上传/识别",
-        "OCR 数学符号或几何图存在模糊"
+        "用户直接上传数学题图片，需要 Agent 亲自理解",
+        "原图的公式、图形或题目条件存在视觉辨识歧义"
       ],
       "inputs": [
-        "input/problem.*",
-        "run.json"
+        "原始图片（必须在 Agent 视觉上下文中实际可见）",
+        "run.json（仅用于原图来源和元信息）"
       ],
       "outputs": [
         "problem.json"
       ],
       "steps": [
-        "逐字核对题干、小问和条件范围",
+        "直接用 Agent 原生视觉能力看原图，亲自理解题干、所有小问与几何图；不得借助任何 OCR/Python/图像解析脚本",
         "检查下标、上标、对数、根式、分式、全称量词和不等号",
         "将图形中直接标注的关系与通过视觉猜测的关系分开",
-        "把无法辨认的字符录入 ambiguities 及候选读法",
-        "保存 problem.json 并运行 G0 校验"
+        "将 Agent 无法确认的符号、裁切与图形条件记录到 ambiguities 并保留候选读法，必要时请求清晰图片",
+        "由真正看过图片的 Agent 自行写 problem.json；G0 脚本只检查 JSON/来源，不负责理解数学内容"
       ],
       "stop": [
         "不允许凭空编写缺失小问",
-        "未解决歧义不得直接下发 math-solver"
+        "未解决歧义不得直接下发 math-solver",
+        "若子 Agent 无法看到图像，不得自称识图成功；应由能看图的主 Agent 处理或保持阻塞"
       ]
     },
     {
