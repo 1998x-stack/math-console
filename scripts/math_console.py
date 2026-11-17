@@ -12,6 +12,7 @@ import argparse
 import ast
 import hashlib
 import json
+import platform
 import re
 import shutil
 import subprocess
@@ -39,6 +40,24 @@ FORBIDDEN_CALLS = {"eval", "exec", "compile", "open", "__import__"}
 SILENCE_MAX_DBFS = -50.0
 # Minimum length of the written justification required to stay at risk_level=standard.
 MIN_RISK_RATIONALE = 10
+# G4c: student pages must never carry answers, and all three layers must exist.
+STUDENT_SECTION_PREFIX = "学生练习"
+ANSWER_SECTION_PREFIX = "教师答案"
+DIFFICULTY_LAYERS = ("foundation", "transfer", "challenge")
+# G4b: the storyboard states the intended lesson length. The renderer additionally
+# checks |video - voiceover| <= 3 s; this gate catches the gross case of a storyboard
+# claiming a ten-minute lesson while the shipped clip is three seconds long.
+STORYBOARD_DURATION_TOLERANCE_S = 10.0
+STORYBOARD_DURATION_TOLERANCE_RATIO = 0.35
+AUDIO_SYNC_TOLERANCE_S = 3.0
+# Gate levels: `practice` is the earlier "ready" level (structure, layers, answer
+# separation) and `release` re-verifies an already published release.json.
+DRAFT_STAGE = "practice"
+RELEASE_STAGE = "release"
+STATUS_STAGES = ("intake", "solve", "verify", "storyboard", "manim",
+                 DRAFT_STAGE, "video", "ppt", RELEASE_STAGE)
+CHECK_STAGES = ("intake", "solve", "verify", "storyboard", "manim",
+                DRAFT_STAGE, "video", "ppt", RELEASE_STAGE, "all")
 
 class GateError(RuntimeError):
     pass
@@ -268,7 +287,8 @@ def ffprobe(file: Path) -> dict:
         fail("缺少 ffprobe，无法确认 MP4 的真实音视频轨道")
     try:
         proc = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type",
+            ["ffprobe", "-v", "error", "-show_entries",
+             "format=duration:stream=codec_type,duration",
              "-of", "json", str(file)], capture_output=True, text=True, timeout=30, check=True
         )
         return json.loads(proc.stdout)
@@ -300,6 +320,7 @@ def audio_peak_dbfs(file: Path) -> float:
 
 
 def check_video(run: Path):
+    board = check_storyboard(run)
     check_manim(run)
     file = require(run, "lesson.mp4", 1024)
     report = ffprobe(file)
@@ -312,6 +333,19 @@ def check_video(run: Path):
         fail("MP4 不包含可用时长")
     if not 1 < length < 7200:
         fail("MP4 时长异常")
+    # A lesson that the storyboard describes as far longer than the shipped clip has
+    # not actually been produced, even though both streams exist.
+    declared = sum(float(beat["duration_s"]) for beat in board["beats"])
+    tolerance = max(STORYBOARD_DURATION_TOLERANCE_S,
+                    STORYBOARD_DURATION_TOLERANCE_RATIO * declared)
+    if abs(length - declared) > tolerance:
+        fail(
+            f"分镜声明的总时长 {declared:.1f}s 与实际视频 {length:.1f}s 相差 "
+            f"{abs(length - declared):.1f}s（允许 {tolerance:.1f}s）：声明的讲解长度与真实成片不符"
+        )
+    audio_seconds = stream_duration(report, "audio")
+    if audio_seconds and abs(audio_seconds - length) > max(AUDIO_SYNC_TOLERANCE_S, 0.1 * length):
+        fail(f"音画不同步：音轨 {audio_seconds:.1f}s 与画面 {length:.1f}s 偏差过大")
     peak = audio_peak_dbfs(file)
     if peak < SILENCE_MAX_DBFS:
         fail(
@@ -320,18 +354,60 @@ def check_video(run: Path):
         )
     return file, length
 
-def check_ppt(run: Path):
-    check_video(run)
+def stream_duration(report: dict, codec_type: str):
+    """Duration of the first stream of a given type, or None when unreported."""
+    for stream in report.get("streams", []):
+        if stream.get("codec_type") != codec_type:
+            continue
+        try:
+            return float(stream["duration"])
+        except (KeyError, TypeError, ValueError):
+            return None
+    return None
+
+def pptx_pages(ppt) -> list:
+    """Classify each slide as student / answer / other using its section header.
+
+    build_slides.py writes the section name into the first text frame of every
+    content slide. Requiring that declared header is what makes it possible to
+    prove that an answer is *not* on a student page instead of merely probing the
+    concatenation of every slide.
+    """
+    pages = []
+    for slide in ppt.slides:
+        texts = [shape.text for shape in slide.shapes if shape.has_text_frame]
+        kind = "other"
+        for text in texts:
+            stripped = text.strip()
+            if stripped.startswith(STUDENT_SECTION_PREFIX):
+                kind = "student"
+                break
+            if stripped.startswith(ANSWER_SECTION_PREFIX):
+                kind = "answer"
+                break
+        pages.append((kind, "\n".join(texts)))
+    return pages
+
+def check_practice(run: Path):
+    """G4c, draft level: practice data and deck content, no video required yet.
+
+    Splitting this out of check_ppt keeps "the deck is ready" separate from "the
+    package may be published", which still requires the voiced MP4 at G4b.
+    """
+    problem, solution, _ = check_verify(run)
     practice = load_json(require(run, "practice.json"))
     schema_validate(practice, "practice.schema.json")
-    problem, solution, _ = check_verify(run)
     if practice["problem_id"] != problem["problem_id"]:
         fail("practice.problem_id 不一致")
     unique([x["id"] for x in practice["items"]], "practice.items")
     source_ids = {x["id"] for x in solution["steps"]}
     for item in practice["items"]:
-        if not set(item["target_step_ids"]).issubset(source_ids):
+        if not item["target_step_ids"] or not set(item["target_step_ids"]).issubset(source_ids):
             fail(f"练习题 {item['id']} 引用了不存在的解答步骤")
+    layers = {item["difficulty"] for item in practice["items"]}
+    absent = [layer for layer in DIFFICULTY_LAYERS if layer not in layers]
+    if absent:
+        fail("分层练习必须包含基础/迁移/挑战三层；缺少: " + ", ".join(absent))
     ppt_path = require(run, "practice.pptx", 2048)
     try:
         from pptx import Presentation
@@ -340,25 +416,159 @@ def check_ppt(run: Path):
     ppt = Presentation(str(ppt_path))
     if len(ppt.slides) < len(practice["items"]) * 2 + 1:
         fail("PPT 缺少练习/答案页")
-    combined = "\n".join(shape.text for slide in ppt.slides for shape in slide.shapes if shape.has_text_frame)
+    pages = pptx_pages(ppt)
+    student = "\n".join(text for kind, text in pages if kind == "student")
+    teacher = "\n".join(text for kind, text in pages if kind == "answer")
+    if not student:
+        fail("PPTX 没有可识别的学生页：每页页首分区文本必须以「学生练习」开头")
+    if not teacher:
+        fail("PPTX 没有可识别的教师答案页：每页页首分区文本必须以「教师答案」开头")
     for item in practice["items"]:
-        if item["question"] not in combined or item["answer"] not in combined:
-            fail(f"PPT 丢失题面或答案: {item['id']}")
+        labeled = "答案：" + item["answer"]
+        if item["question"] not in student:
+            fail(f"PPTX 学生页丢失题面: {item['id']}")
+        if labeled in student:
+            fail(f"PPTX 答案泄漏到学生页: {item['id']}（学生页不得出现「答案：…」）")
+        if labeled not in teacher:
+            fail(f"PPTX 教师答案页丢失答案: {item['id']}")
+        if len(item["answer"]) >= 6 and item["answer"] in student:
+            fail(f"PPTX 学生页出现答案文本: {item['id']}")
     return ppt_path
+
+def check_ppt(run: Path):
+    """G4c, publishable level: the deck plus the voiced lesson video (G4b)."""
+    ppt_path = check_practice(run)
+    check_video(run)
+    return ppt_path
+
+def toolchain_report() -> dict:
+    """Record the versions that produced the evidence, so it can be re-checked."""
+    def first_line(command: list) -> str:
+        if shutil.which(command[0]) is None:
+            return "missing"
+        try:
+            proc = subprocess.run(command, capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            return "unavailable"
+        lines = (proc.stdout or proc.stderr).strip().splitlines()
+        return lines[0] if lines else "unknown"
+
+    def package_version(name: str) -> str:
+        try:
+            from importlib.metadata import PackageNotFoundError, version
+        except ImportError:  # pragma: no cover - Python < 3.8 is already rejected
+            return "unavailable"
+        try:
+            return version(name)
+        except PackageNotFoundError:
+            return "missing"
+
+    return {
+        "python": platform.python_version(),
+        "platform": platform.system(),
+        "ffprobe": first_line(["ffprobe", "-version"]),
+        "ffmpeg": first_line(["ffmpeg", "-version"]),
+        "jsonschema": package_version("jsonschema"),
+        "python-pptx": package_version("python-pptx"),
+    }
+
+def gate_evidence(run: Path) -> dict:
+    """Facts each gate actually observed, so a reader can re-check the claim."""
+    problem, solution, audit = check_verify(run)
+    board = check_storyboard(run)
+    scene = check_manim(run)
+    video_file, length = check_video(run)
+    practice = load_json(require(run, "practice.json"))
+    try:
+        from pptx import Presentation
+        slides = len(Presentation(str(safe_path(run, "practice.pptx"))).slides)
+    except ImportError:  # pragma: no cover - check_practice already fails first
+        slides = 0
+    return {
+        "intake": {
+            "question_ids": sorted(q["id"] for q in problem["questions"]),
+            "risk_level": problem.get("risk_level", "high"),
+            "ambiguities": len(problem.get("ambiguities", [])),
+        },
+        "solve": {
+            "steps": len(solution["steps"]),
+            "results": len(solution["results"]),
+            "author_agent": solution["author"]["agent_id"],
+            "author_context": solution["author"]["context_id"],
+            "author_route": solution["author"]["route"],
+        },
+        "verify": {
+            "reviewer_id": audit["reviewer"]["id"],
+            "independent_reviewer_context": audit["reviewer"]["context_id"],
+            "checks": len(audit["checks"]),
+            "tested_cases": len(audit.get("tested_cases", [])),
+            "human_approved": audit["human_review"]["approved"],
+        },
+        "storyboard": {
+            "beats": len(board["beats"]),
+            "declared_duration_s": sum(float(beat["duration_s"]) for beat in board["beats"]),
+        },
+        "manim": {"lesson_scene_sha256": digest(scene)},
+        "video": {"duration_s": round(length, 3), "audio_peak_dbfs": round(audio_peak_dbfs(video_file), 2)},
+        "practice": {
+            "items": len(practice["items"]),
+            "layers": sorted({item["difficulty"] for item in practice["items"]}),
+            "slides": slides,
+        },
+    }
+
+def check_release(run: Path):
+    """G5: re-verify an already published release report against the current files.
+
+    Without this, mutating a released artifact left no trace: every content gate
+    still passed because none of them compares the shipped bytes to the bytes that
+    were actually published.
+    """
+    check_ppt(run)
+    report = load_json(require(run, "release.json"))
+    info = load_run_meta(run)
+    if report.get("run_id") != info["run_id"]:
+        fail("release.json 的 run_id 与 run.json 不一致")
+    if report.get("source_sha256") != info["source_sha256"]:
+        fail("release.json 记录的原图哈希与 run.json 不一致")
+    gate_status = report.get("gate_status")
+    if not isinstance(gate_status, dict):
+        fail("release.json 缺少 gate_status")
+    for stage in (*STAGES, DRAFT_STAGE):
+        if gate_status.get(stage) != "pass":
+            fail(f"release.json 声明 {stage} 门禁未通过，不能作为发布依据")
+    artifacts = report.get("artifacts")
+    if not isinstance(artifacts, dict) or not artifacts:
+        fail("release.json 缺少 artifacts 清单")
+    unlisted = sorted(set(RELEASE_FILES) - set(artifacts))
+    if unlisted:
+        fail("release.json 未登记全部交付物: " + ", ".join(unlisted))
+    stale = []
+    for name, recorded in artifacts.items():
+        file = require(run, name)
+        if (not isinstance(recorded, dict)
+                or digest(file) != recorded.get("sha256")
+                or file.stat().st_size != recorded.get("size_bytes")):
+            stale.append(name)
+    if stale:
+        fail("release.json 已过期：" + ", ".join(sorted(stale))
+             + " 在发布后被修改（哈希/大小不一致），必须重新通过门禁并重新生成 release.json")
+    return report
 
 def check_one(run: Path, stage: str):
     return {
         "intake": check_intake, "solve": check_solve, "verify": check_verify,
         "storyboard": check_storyboard, "manim": check_manim,
-        "video": check_video, "ppt": check_ppt
+        "video": check_video, DRAFT_STAGE: check_practice, "ppt": check_ppt,
+        RELEASE_STAGE: check_release,
     }[stage](run)
 
 def status(run: Path):
-    for stage in STAGES:
+    for stage in STATUS_STAGES:
         try:
             check_one(run, stage)
             print(f"[PASS] {stage}")
-        except (GateError, OSError, ValueError) as exc:
+        except (GateError, OSError, ValueError, KeyError, TypeError) as exc:
             print(f"[BLOCKED] {stage}: {exc}")
 
 def do_release(run: Path):
@@ -368,12 +578,17 @@ def do_release(run: Path):
                     "size_bytes": require(run, name).stat().st_size}
              for name in RELEASE_FILES}
     release = {
-        "schema_version": "0.1.0", "run_id": info["run_id"],
+        "schema_version": "0.2.0", "run_id": info["run_id"],
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "gate_status": {stage: "pass" for stage in STAGES},
+        "gate_status": {stage: "pass" for stage in (*STAGES, DRAFT_STAGE)},
         "source_sha256": info["source_sha256"],
         "artifacts": files,
-        "note": "结构、媒体与交付门槛检查通过；不代表脚本独立证明了数学命题。"
+        "toolchain": toolchain_report(),
+        "gate_evidence": gate_evidence(run),
+        "note": (
+            "结构、媒体与交付门槛检查通过；gate_evidence 是各门禁实际观测到的事实，"
+            "不代表脚本独立证明了数学命题。可用 check --stage release 复核哈希是否仍然一致。"
+        ),
     }
     (run / "release.json").write_text(json.dumps(release, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"[RELEASE] {run / 'release.json'}")
@@ -420,7 +635,7 @@ def main():
         sub.add_parser(cmd).add_argument("--run", required=True, type=Path)
     check = sub.add_parser("check", help="Validate a specific stage or all stages")
     check.add_argument("--run", required=True, type=Path)
-    check.add_argument("--stage", choices=STAGES + ("all",), required=True)
+    check.add_argument("--stage", choices=CHECK_STAGES, required=True)
     args = p.parse_args()
     try:
         if args.command == "init":
@@ -430,9 +645,14 @@ def main():
         elif args.command == "release":
             do_release(args.run)
         elif args.stage == "all":
-            for stage in STAGES:
+            for stage in (*STAGES, DRAFT_STAGE):
                 check_one(args.run, stage)
-            print("[PASS] all stages")
+            # A release that already exists must still match the files on disk; otherwise
+            # "all gates pass" would be printed for a stale published package.
+            if (args.run / "release.json").is_file():
+                check_release(args.run)
+                print("[PASS] release report still matches every published artifact")
+            print("[PASS] all content and draft gates（release.json 不存在时用 release 子命令生成）")
         else:
             check_one(args.run, args.stage)
             print(f"[PASS] {args.stage}")

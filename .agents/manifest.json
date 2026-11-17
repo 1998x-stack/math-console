@@ -1,7 +1,7 @@
 {
   "project": "math-console",
-  "registry_version": "0.1.0",
-  "manifest_schema_version": "0.1.0",
+  "registry_version": "0.2.0",
+  "manifest_schema_version": "0.2.0",
   "product": "AI Math Teacher Workbench",
   "updated": "2026-11-17",
   "canonical_skill_root": ".agents/skills",

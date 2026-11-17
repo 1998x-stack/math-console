@@ -24,5 +24,13 @@ python scripts/math_console.py check --run workspaces/demo --stage video
 - 服务端严格校验上传大小、源代码白名单并 Docker 隔离，按 job_id 限配额/并发/时长；下载 URL 过期，核对 SHA-256；返回 stderr/stdout 但不得泄露系统秘密。
 - 取消或失败要保留结构化错误码；禁止自动将失败 job 标记为成功。
 
+## 无声预览（没有旁白时唯一允许的产物）
+
+```bash
+python .agents/skills/math-video/scripts/render_docker.py --run workspaces/demo --preview-only
+```
+
+`--preview-only` 仍然在同一个隔离容器内渲染，但不合成音轨、**不创建 `lesson.mp4`**，只写 `silent.mp4` 供人工抽查画面。脚本会明确打印“不能称为讲解 MP4”。只有拿到真实旁白（TTS 或教师录音）后才使用默认模式生成 `lesson.mp4` 并通过 G4b；分镜声明总时长与成片时长偏差需在 `max(10s, 35%)` 以内。
+
 ## 视频检查
 检查 `ffprobe` 真实流：video+audio，duration >1s 且不过长；核对分镜 voiceover 口述与画面节奏。MP4 没有音轨只能叫预览，不能叫完整讲解成品。

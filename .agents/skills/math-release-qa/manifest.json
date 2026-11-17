@@ -1,6 +1,6 @@
 {
   "id": "math-release-qa",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "schema_version": "0.1.0",
   "stage": "release",
   "title": "教学包发布质检与版本追溯",
@@ -23,7 +23,8 @@
     "审校证据真实、音频为实际讲解内容、输入图片版权与隐私合规"
   ],
   "gates": [
-    "只有所有强制门槛通过才能产生 release.json；发布后文件变更会使哈希校验失败。"
+    "只有所有强制门槛通过才能产生 release.json；发布后文件变更会使哈希校验失败。",
+    "release.json 记录 toolchain 与 gate_evidence；check --stage release 会重新比对全部产物哈希，上游文件改动即判定过期。"
   ],
   "references": [
     "references/quality-rubric.md"

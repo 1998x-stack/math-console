@@ -1,6 +1,6 @@
 {
   "id": "math-practice-ppt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "schema_version": "0.1.0",
   "stage": "ppt",
   "title": "分层课堂练习 PPTX 生产",
@@ -20,7 +20,8 @@
     "练习题需重新校验正确性，不得因为来自模型就直接相信"
   ],
   "gates": [
-    "题目与答案分隔，全部练习有可复核解析；PPTX 内文字可编辑。"
+    "题目与答案分隔，全部练习有可复核解析；PPTX 内文字可编辑。",
+    "G4c 由页首分区取证：题面只在学生页、答案只在教师页，且基础/迁移/挑战三层齐备；草稿级 check_practice 不需要视频。"
   ],
   "references": [
     "references/assessment-design.md"

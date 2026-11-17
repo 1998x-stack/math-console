@@ -57,5 +57,54 @@ def main():
     print(f"[PASS] {len(list(SKILLS.iterdir()))} 个 Skills：元数据、资源路径、Claude 链接全部有效")
     return 0
 
+
+def check_project_index():
+    """The published stage index must match the skills and the agent registry.
+
+    .agents/manifest.json is the human-facing index of the pipeline. Nothing used
+    to validate it, so it could silently disagree with agents/registry.json and
+    with the skill directories (it did: registry_version 0.1.0 vs 0.2.0).
+    """
+    errors = []
+    index_file = ROOT / ".agents" / "manifest.json"
+    try:
+        index = json.loads(index_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [f".agents/manifest.json 无法读取: {exc}"]
+    try:
+        registry = json.loads((ROOT / "agents" / "registry.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [f"agents/registry.json 无法读取: {exc}"]
+    if index.get("registry_version") != registry.get("version"):
+        errors.append(
+            f".agents/manifest.json registry_version={index.get('registry_version')} "
+            f"与 agents/registry.json version={registry.get('version')} 不一致"
+        )
+    registry_skills = {role["skill"] for role in registry["roles"]}
+    indexed_skills = set()
+    for stage in index.get("stages", []):
+        skill = stage.get("skill")
+        indexed_skills.add(skill)
+        manifest = ROOT / str(stage.get("manifest", ""))
+        if not manifest.is_file():
+            errors.append(f"stages[{stage.get('stage')}] 的 manifest 不存在: {stage.get('manifest')}")
+        expected = SKILLS / str(skill) / "manifest.json"
+        if manifest.resolve() != expected.resolve():
+            errors.append(f"stages[{stage.get('stage')}] 的 manifest 路径与 Skill 目录不一致: {skill}")
+        if not (SKILLS / str(skill) / "SKILL.md").is_file():
+            errors.append(f"stages[{stage.get('stage')}] 引用的 Skill 不存在: {skill}")
+        for role_skill in (stage.get("skill"),):
+            if role_skill and role_skill not in registry_skills:
+                errors.append(f"stages[{stage.get('stage')}] 的 Skill 未被任何 Agent 角色使用: {role_skill}")
+    uncovered = sorted(registry_skills - indexed_skills)
+    if uncovered:
+        errors.append("以下 Skill 未出现在 .agents/manifest.json stages 中: " + ", ".join(uncovered))
+    return errors
+
 if __name__ == "__main__":
+    failures = check_project_index()
+    if failures:
+        print("\n".join(f"[FAIL] {error}" for error in failures))
+        sys.exit(1)
+    print("[PASS] .agents/manifest.json 与 agents/registry.json 及各 Skill 目录一致")
     sys.exit(main())

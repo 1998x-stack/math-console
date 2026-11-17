@@ -1,6 +1,6 @@
 {
   "id": "math-video",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "schema_version": "0.1.0",
   "stage": "video",
   "title": "隔离渲染与旁白 MP4 合成",
@@ -17,10 +17,11 @@
   ],
   "prerequisites": [
     "G4a Manim 静态检查通过",
-    "Docker、ffmpeg、ffprobe 就绪；已获得真实旁白音频 voiceover.wav"
+    "Docker、ffmpeg、ffprobe 就绪；合成 lesson.mp4 需要真实旁白音频 voiceover.wav（仅做预览可用 --preview-only）"
   ],
   "gates": [
-    "无声预览不得冒充最终讲解 MP4；容器沙箱不可信 Python 是硬性要求。"
+    "无声预览不得冒充最终讲解 MP4；容器沙箱不可信 Python 是硬性要求。",
+    "check_video 会核对分镜声明总时长与成片时长，并测量音轨峰值拒绝静音；--preview-only 只产出 silent.mp4，绝不创建 lesson.mp4。"
   ],
   "references": [
     "references/render-protocol.md"

@@ -1,4 +1,4 @@
-# 图像 → 高质量数学教学包：工作流规范 v0.1
+# 图像 → 高质量数学教学包：工作流规范 v0.2
 
 ## 目标与范围
 面向高中数学教师，首批支持函数、导数、解析几何和概率统计；支持题干共享的多小问、不同难度与多种课堂练习。**既要数学正确，也要教学有效**。不把“符号表达式等价”当成完整证明。
@@ -11,9 +11,10 @@
 | verify | 独立审校 Agent | 原图+结构化答案 | audit.json | G2：独立重推+参数分类+反例检验，困难证明人工审定；不通过退回 solve |
 | storyboard | 教研/导演 Agent | 审核过的答案 | storyboard.json, storyboard.md | G3：逐场景映射 step_id；引导猜想但不冒充证明 |
 | manim | 动画开发 Agent | storyboard | lesson_scene.py | G4a：静态检查、版本 API、可编辑、清晰中文排版 |
-| video | 隔离渲染 Agent | 源码+旁白音轨 | lesson.mp4 | G4b：视频流+音频流+时长+可播放，渲染过程可追踪 |
-| ppt | 练习 Agent | 已审核的结论和知识点 | practice.json, practice.pptx | G4c：题目分层、答案与题面一致、教师页不泄题 |
-| release | QA Agent | 所有产物 | release.json | G5：依赖链、文件校验、完整性与 SHA-256 |
+| video | 隔离渲染 Agent | 源码+旁白音轨 | lesson.mp4 | G4b：视频流+音频流+时长+可播放，渲染过程可追踪；分镜声明总时长与成片时长必须一致（偏差 ≤ max(10s, 35%)），音轨电平不得接近静音（≤ -50 dBFS 判定为无旁白） |
+| practice（草稿门禁） | 练习 Agent | 已审核的结论和知识点 | practice.json, practice.pptx | G4c-结构：三层题型齐备、题干/答案一致、答案只在教师页；**不需要视频**，用于区分“练习已就绪”与“可发布” |
+| ppt | 练习 Agent | 已审核的结论和知识点 + 有声 lesson.mp4 | practice.json, practice.pptx | G4c：草稿门禁全部条件 + 必须已有通过 G4b 的成片 |
+| release | QA Agent | 所有产物 | release.json | G5：依赖链、文件校验、完整性与 SHA-256；`check --stage release` 可再次复核已发布报告，上游文件被改动即判定 release.json 过期 |
 
 推荐对 `verify` 使用不同模型/不同上下文的独立审校 Agent；高风险数学证明（特别是压轴题、多参数不等式）由教师人工确认，审校的签名与日期必须是真实录入，不得自动编造。
 
@@ -27,8 +28,11 @@
 - `solution.steps[].id` 是被审校、分镜和课堂练习引用的唯一主键。
 - `audit.checked_step_ids` 与 `storyboard.beats[].step_ids` 必须对应真实步骤。
 - 每个 storyboard beat 包含 `visual`、`voiceover`、`pedagogy`、`duration_s`。禁止将“显然”作为数学证明。
-- practice 每题有 `difficulty`、`answer`、`solution`、`knowledge_tags`、`target_step_ids`。
-- `release.json` 由程序以真实文件 SHA-256 生成，而不是 LLM 手写。
+- practice 每题有 `difficulty`、`answer`、`solution`、`knowledge_tags`、`target_step_ids`，且三层题型（foundation/transfer/challenge）必须全部出现。
+- practice.pptx 必须带分区页首（`学生练习` / `教师答案`）。脚本按分区取证：题面只能出现在学生页，`答案：…` 只能出现在教师答案页，两者同时被检查。
+- `release.json` 由程序以真实文件 SHA-256 生成，而不是 LLM 手写；同时记录 `toolchain` 与 `gate_evidence`（每个门禁实际观测到的事实，例如成片时长与音轨峰值），便于第三方复核。
+- Gate 强度分层：`check_practice` 是草稿级（无视频也可验证结构），`check_ppt` 是发布级（含 G4b 成片），`check_release` 只在前两者都通过时复核已发布报告。
+- 不存在音轨时只能产出 `silent.mp4` 预览（`render_docker.py --preview-only`），脚本不会创建 lesson.mp4；无声文件永不作为讲解成品。
 
 ## 模型、算法与人类职责
 - LLM/Vision：识别、构思不同解法、教学分镜、编写 Manim 代码与练习题。
@@ -43,4 +47,4 @@
 数学错误率（审校发现严重错误必须 0 发布）、学生能否复述关键变形动机、教师修改次数、视频同步偏差、渲染成功率、PPT 答案一致率和单题成本。建议在真实教师试点期间留存每次人工修订及其原因。
 
 ## 发布完成定义
-必须能打开 `solution.md`、`storyboard.md`、`lesson_scene.py`、`lesson.mp4`、`practice.pptx`；其中 lesson.mp4 有真实音轨，PPT 包含教师答案页；release.json 校验哈希。任何缺失以 `blocked` 报告，不生成假产物。
+必须能打开 `solution.md`、`storyboard.md`、`lesson_scene.py`、`lesson.mp4`、`practice.pptx`；其中 lesson.mp4 有真实音轨，PPT 的答案只出现在教师答案页；release.json 校验哈希，且 `check --stage release` 在成片或其他产物被改动后必须判定过期。任何缺失以 `blocked` 报告，不生成假产物。
