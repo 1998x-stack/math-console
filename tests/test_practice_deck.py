@@ -23,8 +23,8 @@ class PracticeDeckTest(unittest.TestCase):
         self.assertEqual(len(deck.slides),8)
         def text(slides):
             return "\n".join(shape.text for slide in slides for shape in slide.shapes if shape.has_text_frame)
-        student=text(deck.slides[1:4])
-        teacher=text(deck.slides[5:])
+        student=text([deck.slides[i] for i in range(1,4)])
+        teacher=text([deck.slides[i] for i in range(5,len(deck.slides))])
         for item in practice["items"]:
             self.assertIn(item["question"],student)
             self.assertNotIn(item["answer"],student)
