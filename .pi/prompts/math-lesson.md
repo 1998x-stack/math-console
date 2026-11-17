@@ -1,0 +1,1 @@
+从给定数学题图片开始，先读取 AGENTS.md 和 math-teacher-pipeline Skill。若已安装并启用 Pi subagent 扩展且允许 project agentScope，可使用 .pi/agents/math-conductor.md 进行委派；否则按 Skills 顺序运行并明确无法自动派生独立审校。所有质量关卡失败均应阻塞，不得宣称生成真实 MP4 或通过数学证明审核。

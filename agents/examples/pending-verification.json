@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.2.0",
+  "run_id": "example-lesson",
+  "stage": "verify",
+  "agent_id": "math-proof-auditor",
+  "status": "pending",
+  "inputs": [
+    "problem.json",
+    "solution.json",
+    "solution.md"
+  ],
+  "outputs": [],
+  "evidence": [],
+  "blockers": [
+    "独立审核尚未进行，不能将 G2 标记为 pass"
+  ],
+  "next_agent": "math-conductor",
+  "upstream_gate": "G1",
+  "notes": "格式模板，不是已通过证明或已签核记录"
+}

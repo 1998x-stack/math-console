@@ -1,0 +1,5 @@
+# Project-scoped settings are loaded by Codex for trusted projects only.
+# Agent roles are native TOML files at .codex/agents/*.toml.
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4

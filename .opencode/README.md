@@ -1,7 +1,7 @@
-# OpenCode 接入
+# OpenCode V2 Agent 入口
 
-从仓库根目录启动 OpenCode。读取根目录 `AGENTS.md`；Skills 从 `.agents/skills` 自动发现，无需复制到 `.opencode/skills`，避免技能 ID 冲突。
+本仓库使用 .opencode/agents/<name>.md，主控 math-conductor 为 mode: primary，其他专家为 mode: subagent。OpenCode 可以自动路由，也可以通过 @math-proof-auditor 等明确调用。各文件采用 V2 的 permissions 数组而不是旧版 permission 键。
 
-可切换 `math-conductor` 主 Agent；`math-proof-auditor`、`math-pedagogy-reviewer` 和 `math-release-auditor` 作为专职子 Agent。子 Agent 不是人工签核替代品。
+验证角色的 edit/shell 显式 deny；非审校角色执行 shell 需要 ask。所有角色都应加载相应 Skill。角色文件来自 agents/registry.json，请勿手工编辑。
 
-参考 https://opencode.ai/docs/skills 和 https://opencode.ai/docs/agents/
+参考：https://opencode.ai/docs/agents 和 https://opencode.ai/docs/migrate-v1
