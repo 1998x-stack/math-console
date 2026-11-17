@@ -15,7 +15,7 @@ class WorkbenchSmokeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             img = base / "source.png"
-            Image.new("RGB", (32, 32), (255, 255, 255)).save(img)
+            Image.new("RGB", (128, 128), (255, 255, 255)).save(img)
             run = base / "run"
             mc.do_init(img, run)
             data = {
