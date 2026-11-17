@@ -66,7 +66,9 @@ jobs:
           git add docs/product-plans/*.pdf
           if ! git diff --cached --quiet; then
             git commit -m "docs: publish three AI math education PDF plans"
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           else
             echo "PDFs unchanged"
           fi
