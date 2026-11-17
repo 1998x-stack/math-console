@@ -44,3 +44,41 @@ PY
 ```
 
 > **说明：** 报告为规划草案。预算、定价、用户数量、实施进度和增长目标均为待验证的情景假设，不应直接视为市场事实或产品承诺。
+
+---
+
+## AI 数学教师工作台：Agent & Skills（v0.1）
+
+> 目标：输入数学题目图片，构建 **经过独立审校的解答 Markdown → 教学分镜 → 可编辑 Manim 源码 → 有中文旁白的 MP4 → 课堂练习 PPTX**。本阶段已落地可复用的 Agent 编排与脚本框架；视觉识别、AI 求解、独立证明审校、语音服务及 Docker 执行需要实际连接并完成，不能将模板等同于最终成品。
+
+- **入口**：[AGENTS.md](AGENTS.md)（Codex / OpenCode / Pi）、[CLAUDE.md](CLAUDE.md)（Claude Code）、[Agent.md](Agent.md)（流程索引）。
+- **九个 Skills**：[.agents/skills](.agents/skills)（含总流程和八个专业技能）；各自有 `SKILL.md / manifest.json / references / scripts / assets`。
+- **专业子 Agent**：[.opencode/agents](.opencode/agents)，含主控、证明审校、教研审阅、发布审阅。
+- **完整工程规范**：[workbench-pipeline.md](docs/architecture/workbench-pipeline.md)；[跨平台接入](docs/architecture/agent-compatibility.md)。
+- **CI 测试**：[validate-agent-skills.yml](.github/workflows/validate-agent-skills.yml)，验证 Skill 元信息、符号链接、Python 语法和示例质量门禁。
+
+### 快速开始
+
+```bash
+python -m pip install -r requirements-workbench.txt
+
+# 真实的题目图片（不将学生个人信息提交仓库）
+python scripts/math_console.py init --image /path/to/problem.png --run workspaces/lesson-001
+
+# 在 Codex / OpenCode / Pi / Claude 中让 Agent 阅读总流程 Skill，
+# 逐阶段编写 problem.json、solution.*、audit.json、storyboard.* ...
+python scripts/math_console.py status --run workspaces/lesson-001
+python scripts/math_console.py check --stage verify --run workspaces/lesson-001
+
+# 有真实 voiceover.wav 后才可做隔离渲染：
+python .agents/skills/math-video/scripts/render_docker.py \
+  --run workspaces/lesson-001 --voiceover workspaces/lesson-001/voiceover.wav --build-image
+
+# 练习数据审核完成后生成可编辑 PPTX：
+python .agents/skills/math-practice-ppt/scripts/build_slides.py --run workspaces/lesson-001
+
+# 最终交付（必须所有质量门禁通过）：
+python scripts/math_console.py release --run workspaces/lesson-001
+```
+
+**必须重视：** G2 审校通过前不能生产课堂发布视频；高风险证明需要真人教师签核。Manim Python 来源于模型生成，不得在未隔离的主机执行。仅有结构校验、符号抽样或 ffprobe 检测均不代表教学内容已被数学上证明正确。
