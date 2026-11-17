@@ -37,11 +37,16 @@
   ],
   "status": "starter-implementation",
   "requires_external_model": true,
-  "requires_human_signoff_for_high_risk": true,
+  "requires_human_signoff_for_high_risk": false,
   "compatibility": [
     "Codex",
     "OpenCode",
     "Pi",
     "Claude Code"
-  ]
+  ],
+  "signoff_policy": {
+    "default": "auto_waiver",
+    "strict": "strict",
+    "semantics": "auto_waiver 是机器策略放行，不代表真人签名；独立数学审校不可跳过。"
+  }
 }

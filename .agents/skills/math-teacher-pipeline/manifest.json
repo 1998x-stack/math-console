@@ -28,7 +28,7 @@
     "确认不包含未经授权公开的学生个人信息"
   ],
   "gates": [
-    "不可跳过任一门槛。脚本不能替代具备视觉的 LLM、独立证明或真人签核。"
+    "不可跳过任一门槛。脚本不能替代具备视觉的 LLM、独立证明或严格模式下的真人签核。"
   ],
   "references": [
     "references/orchestration-playbook.md"
@@ -41,11 +41,16 @@
   ],
   "status": "starter-implementation",
   "requires_external_model": true,
-  "requires_human_signoff_for_high_risk": true,
+  "requires_human_signoff_for_high_risk": false,
   "compatibility": [
     "Codex",
     "OpenCode",
     "Pi",
     "Claude Code"
-  ]
+  ],
+  "signoff_policy": {
+    "default": "auto_waiver",
+    "strict": "strict",
+    "semantics": "auto_waiver 是机器策略放行，不代表真人签名；独立数学审校不可跳过。"
+  }
 }

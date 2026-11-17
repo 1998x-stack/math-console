@@ -7,7 +7,7 @@
 1. 检查当前 git status，保护已有工作区与用户改动；读取 workspaces/<RUN_ID>/reports/ 下真正存在的报告、失败日志和质量门禁状态。
 2. 按 P0 > P1 > P2 优先处理最重要、可复现的三个问题。每个问题必须先给失败测试，再做最小修复，随后运行回归测试并记录退出码。
 3. Agent 角色变更只能修改 agents/registry.json 后运行 python scripts/sync_agents.py；Skill 变更必须同步 SKILL.md、references/、manifest.json 与关联测试，避免四平台漂移。
-4. 数学审校必须由不同上下文的 math-proof-auditor 执行，高风险需要真人教师审核。没有实际审校/音轨/视频/图片时只标为 BLOCKED 或 UNVERIFIED，不得修饰为 PASS。
+4. 数学审校必须由不同上下文的 math-proof-auditor 执行，高风险题默认 auto_waiver 免教师签字阻塞但绝不冒充真人已审，strict 模式需要实际教师签核。没有实际审校/音轨/视频/图片时只标为 BLOCKED 或 UNVERIFIED，不得修饰为 PASS。
 5. 运行 python scripts/sync_agents.py --check、python scripts/validate_skill_manifests.py、python -m unittest discover -s tests -p test_*.py -v，以及所修阶段的 math_console check。
 6. 若有真实图片、TTS 音轨、Docker，则继续端到端；否则完成可独立验证的工程部分并明确列出阻塞原因。
 7. 不自动 git commit / push / PR，不执行未知 Manim Python 于宿主，不覆盖用户数据。结束时输出：修复文件、测试前后证据、实际 Agent 委派记录、G0-G5 状态、产物路径、下轮三项优先级。

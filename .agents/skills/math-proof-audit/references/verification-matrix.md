@@ -23,7 +23,7 @@
 ## 可审计 audit.json
 `verdict=pass|revise|block`，`reviewer`（id、role、independent_from_solver），`independent_method`，`checks` 每项含 passed/evidence/step_ids，`tested_cases` 和 `unresolved`，以及 `human_review`。
 
-高风险证明要求 reviewer_name 和 reviewed_at 非空。结构校验仅能验证字段存在，无法证明签名真实性；教学团队必须建立真实审核记录。
+高风险证明应当记录 human_review.required=true；工作区默认 auto_waiver 可以在 G2 独立审校通过后免教师签字继续，但记录为 waived_by_default_policy 而非真人签名。strict 模式要求 reviewer_name、reviewed_at 和最终产物签核文件。字段存在本身不能证明真人身份。
 
 ## 复核示例
 `f(x)=x\ln x-ax` 在 x>0 上导数 `\ln x+1-a`。

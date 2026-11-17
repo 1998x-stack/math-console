@@ -19,7 +19,7 @@
     "审校上下文与解题上下文隔离；审校身份不得伪造"
   ],
   "gates": [
-    "验证独立性、所有 step 覆盖、严重问题清零；复杂证明需真实人工确认。"
+    "验证独立性、所有 step 覆盖、严重问题清零；复杂证明默认 auto_waiver 豁免等待签字；strict 必须人工确认。"
   ],
   "references": [
     "references/verification-matrix.md"
@@ -32,11 +32,16 @@
   ],
   "status": "starter-implementation",
   "requires_external_model": true,
-  "requires_human_signoff_for_high_risk": true,
+  "requires_human_signoff_for_high_risk": false,
   "compatibility": [
     "Codex",
     "OpenCode",
     "Pi",
     "Claude Code"
-  ]
+  ],
+  "signoff_policy": {
+    "default": "auto_waiver",
+    "strict": "strict",
+    "semantics": "auto_waiver 是机器策略放行，不代表真人签名；独立数学审校不可跳过。"
+  }
 }

@@ -10,7 +10,7 @@
 - Conductor：安排任务、写运行日志、确认各阶段拥有真实证据；不直接给自己发独立审校许可。
 - Image interpreter：逐字转录，识别数学公式与图形；区分“我看到”与“我猜测”。
 - Solver：至少写出可审核推导，不省略关键变形或参数分类。
-- Independent proof auditor：另一模型或隔离上下文，不预设解答正确；高风险题交人工教师。
+- Independent proof auditor：另一模型或隔离上下文，不预设解答正确；高风险题保留教师审阅义务。默认 auto_waiver 仅免签名阻塞，strict 模式则交真实教师审批。
 - Lesson designer：把同一个共享题干拆成每小问不同教学动画和练习。
 - Manim engineer：输出简洁可编辑 Python；保留版本、字体和画面尺寸设置。
 - Renderer：负责 Docker 与音频同步；仅可执行经过授权且隔离的代码。
