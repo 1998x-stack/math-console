@@ -54,3 +54,16 @@ class QaToolsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_review_fails_without_real_agent_visual_inspection(self):
+        mod = load("scripts/prepare_media_review.py", "prepare_media_review_pending")
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d)
+            (run / "lesson.mp4").write_bytes(b"x" * 2048)
+            (run / "storyboard.json").write_text(json.dumps({"beats": [
+                {"id": "b1", "step_ids": ["s1"], "duration_s": 3}
+            ]}), encoding="utf-8")
+            data = mod.build_review(run, extract=False)
+            (run / "media-review.json").write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "pending"):
+                mod.check_review(run)

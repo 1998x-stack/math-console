@@ -35,6 +35,7 @@ RELEASE_FILES = (
     "lesson.mp4", "practice.json", "practice.pptx",
 )
 TEACHER_APPROVAL_FILE = "teacher-approval.json"
+MEDIA_REVIEW_FILE = "media-review.json"
 TEACHER_REVIEW_POLICIES = ("auto_waiver", "strict")
 DEFAULT_TEACHER_REVIEW_POLICY = "auto_waiver"  # policy waiver is NOT a human signature
 FORBIDDEN_IMPORTS = {"os", "sys", "subprocess", "socket", "requests", "httpx", "urllib", "shutil", "pathlib"}
@@ -582,6 +583,14 @@ def check_release(run: Path):
         fail("发布报告与当前教师审核策略不一致")
     if policy == "strict" and not (run / TEACHER_APPROVAL_FILE).is_file():
         fail("strict 策略要求真实教师签核文件 teacher-approval.json")
+    if (run / MEDIA_REVIEW_FILE).is_file():
+        from prepare_media_review import check_review
+        try:
+            check_review(run)
+        except (OSError, ValueError, KeyError) as exc:
+            fail("media-review.json 审阅证据未通过: " + str(exc))
+        if MEDIA_REVIEW_FILE not in artifacts:
+            fail("release.json 未登记可见的媒体视觉审阅证据")
     if (run / TEACHER_APPROVAL_FILE).is_file():
         if TEACHER_APPROVAL_FILE not in artifacts:
             fail("release.json 未登记现有教师批准证据")
@@ -640,8 +649,14 @@ def do_release(run: Path):
         fail("strict 策略要求真实教师签核文件；audit.json 自填字段不足以放行")
     if (run / TEACHER_APPROVAL_FILE).is_file():
         check_teacher_approval(run)
+    if (run / MEDIA_REVIEW_FILE).is_file():
+        from prepare_media_review import check_review
+        try:
+            check_review(run)
+        except (OSError, ValueError, KeyError) as exc:
+            fail("media-review.json 审阅未完成: " + str(exc))
     info = load_run_meta(run)
-    release_files = RELEASE_FILES + ((TEACHER_APPROVAL_FILE,) if (run / TEACHER_APPROVAL_FILE).is_file() else ())
+    release_files = RELEASE_FILES + ((TEACHER_APPROVAL_FILE,) if (run / TEACHER_APPROVAL_FILE).is_file() else ()) + ((MEDIA_REVIEW_FILE,) if (run / MEDIA_REVIEW_FILE).is_file() else ())
     files = {name: {"sha256": digest(require(run, name)),
                     "size_bytes": require(run, name).stat().st_size}
              for name in release_files}
@@ -655,6 +670,8 @@ def do_release(run: Path):
         "artifacts": files,
         "toolchain": toolchain_report(),
         "gate_evidence": gate_evidence(run),
+        "media_visual_review": ("reviewed" if (run / MEDIA_REVIEW_FILE).is_file()
+                                else "unverified_optional"),
         "note": (
             "结构、媒体与交付门槛检查通过；gate_evidence 是各门禁实际观测到的事实，"
             "不代表脚本独立证明了数学命题。可用 check --stage release 复核哈希是否仍然一致。"

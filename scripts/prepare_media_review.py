@@ -29,7 +29,7 @@ def frame_plan(board: dict) -> list[dict]:
             "beat_id": beat["id"], "step_ids": beat["step_ids"],
             "time_s": round(seconds + duration / 2, 3),
             "frame": f"reviews/frame_{i:03d}.png",
-            "verdict": "pending",
+            "verdict": "pending", "frame_sha256": None,
             "math_correct": None, "layout_ok": None, "narration_aligned": None,
             "notes": "",
         })
@@ -61,6 +61,7 @@ def build_review(run: Path, *, extract: bool = True) -> dict:
             ], check=True, timeout=90)
             if not output.is_file() or output.stat().st_size < 128:
                 raise RuntimeError("Failed to extract actual frame: " + str(output))
+            item["frame_sha256"] = digest(output)
     return {
         "schema_version": "0.1.0",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -94,6 +95,8 @@ def check_review(run: Path) -> dict:
         path = (run / s["frame"]).resolve()
         if not path.is_relative_to(run) or not path.is_file():
             raise ValueError("Missing/unsafe scene frame")
+        if not s.get("frame_sha256") or digest(path) != s["frame_sha256"]:
+            raise ValueError("Scene frame bytes changed since review")
         if (s["verdict"] != "pass" or s["math_correct"] is not True or
                 s["layout_ok"] is not True or s["narration_aligned"] is not True or
                 not s["notes"].strip()):
