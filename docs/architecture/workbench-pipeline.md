@@ -16,7 +16,7 @@
 | ppt | 练习 Agent | 已审核的结论和知识点 + 有声 lesson.mp4 | practice.json, practice.pptx | G4c：草稿门禁全部条件 + 必须已有通过 G4b 的成片 |
 | release | QA Agent | 所有产物 | release.json | G5：依赖链、文件校验、完整性与 SHA-256；`check --stage release` 可再次复核已发布报告，上游文件被改动即判定 release.json 过期 |
 
-推荐对 `verify` 使用不同模型/不同上下文的独立审校 Agent；高风险数学证明（特别是压轴题、多参数不等式）由教师人工确认，审校的签名与日期必须是真实录入，不得自动编造。
+推荐对 `verify` 使用不同模型/不同上下文的独立审校 Agent；高风险数学证明保留教师审核义务，默认 auto_waiver 可免等待教师签字，但不等于有人类实际审阅。严格 strict 模式必须真实录入教师签核，不得自动编造签名和日期。
 
 ## 输入图片处理：Agent 直接视觉理解
 **原始图片应由 Agent 多模态能力直接观看，不使用 OCR、Python、Pillow/OpenCV 或第三方图片解析脚本提取题面。** 在 Codex 中通过图片附件或 CLI `--image` 将图片交给模型；识别对象包括正文、公式、图形标记、各个小问与模糊点。`init` 只做文件归档，`check` 只验证数据结构/哈希，不能替代视觉推理。不能访问附件的子 Agent 必须显式说明限制，不得伪装已看图。

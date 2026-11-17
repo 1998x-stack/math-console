@@ -98,7 +98,7 @@ python scripts/math_console.py --help
 - 图中有 3 个小问却只输出 2 个结果；重复 question_id 或 step_id。
 - 步骤引用不存在、互相循环依赖、参数范围或定义域信息缺失。
 - solution.json 的 problem_id 与 problem.json 不同。
-- audit.json 自称 pass，但没有实际独立审校证据、审校覆盖不全、unresolved 为空是假象或高风险缺真人签核。
+- audit.json 自称 pass，但没有实际独立数学审校证据、审校覆盖不全、unresolved 为空是假象；strict 模式下高风险缺真实教师签核。auto_waiver 不能伪称教师已批准。
 - storyboard 只覆盖部分步骤，或引入未经审核的新数学命题。
 - Manim 模板语法可解析却未经沙箱运行；检查失败不能靠修改标记消失。
 - MP4 仅有视频没有音轨、音频与画面不同步、损坏的容器格式、虚假路径或已过期的文件。
@@ -139,7 +139,7 @@ python scripts/math_console.py status --run workspaces/codex-local-001
 在**独立 Agent 上下文**里先独立推导，再核对每一个 step_id，寻找反例、边界、退化情形，生成具有真实来源的审校报告和问题清单。不能让作者扮演审校者。
 
 - 如果本地 Codex 没有多 Agent：保持 G2 BLOCKED 并记录需要的独立会话/教师审批，后续只可构建非发布预览。
-- 对难度较高的参数不等式、空间几何压轴证明等明确 high risk，必须有真人教师签核，不能在示例中自动填 approved=true。
+- 对复杂参数不等式、空间几何压轴证明等标记 high risk；默认 auto_waiver 免教师签字阻塞，strict 才必须有真实教师签核。即使自动放行，也不能自动填 approved=true 或编造签名。
 - 将数学引理与视觉示意的区别明确记录；仅符号计算等价或随机采样不算完整证明。
 
 ### D3 — math-storyboard-designer + pedagogy-reviewer
@@ -193,7 +193,7 @@ git status --short
 
 - **A — 结构层**：所有角色、Skill、manifest、TOML、Schema、单测和配置同步通过（本地证据）。
 - **B — Agent 层**：真实触发 Codex custom subagent，保存委派角色与产物记录；没实际调用则 UNVERIFIED。
-- **C — 数学层**：Codex Agent 通过原生视觉**实际看懂原始题目图片** + 全部小问求解 + 独立审校；高风险证明有真实教师签核；缺任何一项则 BLOCKED。**不采用 OCR/脚本解析图片。**
+- **C — 数学层**：Codex Agent 原生视觉真正看懂原图 + 全部小问求解 + 独立数学审校；高风险题保留教师审核义务，默认按 auto_waiver 放行但不得称真人签核，strict 则必须有真实签核。**不采用 OCR/脚本解析图片。**
 - **D — 媒体层**：Manim 沙箱执行与真实有声 MP4、关键画面检查通过；缺音轨时只能说预览。
 - **E — 课件/发布层**：分层练习正确性复核、可编辑 PPTX、完整 release.json 与哈希通过。
 
