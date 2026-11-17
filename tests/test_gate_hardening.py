@@ -51,10 +51,11 @@ def deck_module():
 
 def practice_data(difficulties=DIFFICULTIES, problem_id="t-1"):
     return {
-        "schema_version": "0.1.0", "problem_id": problem_id, "lesson_title": "导数入门",
+        "schema_version": "0.2.0", "problem_id": problem_id, "lesson_title": "导数入门",
         "items": [
             {"id": f"p{i}", "difficulty": difficulty, "question": f"第{i}题：求 x^{i} 的导数",
              "answer": f"第{i}题答案：{i}x^{i-1}", "solution": "使用幂函数求导法则逐步计算。",
+             "teaching_objective": "能用幂函数求导法则完成计算。",
              "knowledge_tags": ["求导"], "target_step_ids": ["s1"], "minutes": 3}
             for i, difficulty in enumerate(difficulties, start=1)
         ],

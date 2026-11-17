@@ -16,7 +16,7 @@
 
 ## 标准数据格式
 `practice.json` 含 schema_version、problem_id、lesson_title、teacher_notes、items[]。
-每个 item 包含 id、difficulty、question、answer、solution、knowledge_tags、target_step_ids、minutes。
+每个 item 包含 id、difficulty、question、answer、solution、teaching_objective、knowledge_tags、target_step_ids、minutes。教学目标须明确说明学生完成本题后能做什么，并在教师答案页显示。
 课程标准章节信息和题源许可可后续增量扩展到 manifest，不应编造为官方来源。
 
 ## 可编辑 PPTX

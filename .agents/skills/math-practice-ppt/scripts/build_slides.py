@@ -1,19 +1,28 @@
 #!/usr/bin/env python3
 """Generate an editable 16:9 teacher practice deck (students first, answers last)."""
 from __future__ import annotations
-import argparse,json,sys
+import argparse,json,os,sys
 from pathlib import Path
 from pptx import Presentation
 from pptx.util import Inches,Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.oxml.xmlchemy import OxmlElement
 
 ROOT=Path(__file__).resolve().parents[4]
 NAVY=RGBColor(23,40,63)
 TEAL=RGBColor(20,143,139)
 GREY=RGBColor(91,109,125)
 WHITE=RGBColor(255,255,255)
+
+# PowerPoint keeps text editable and resolves the named font on the viewing host.
+# YaHei is usually absent on macOS; its fallback can drop all CJK glyphs in PDF export.
+CJK_FONT=os.environ.get("MATH_CONSOLE_CJK_FONT") or (
+    "PingFang SC" if sys.platform == "darwin" else
+    "Microsoft YaHei" if sys.platform == "win32" else
+    "Noto Sans CJK SC"
+)
 
 def shape_text(slide,x,y,w,h,text,size=28,bold=False,color=NAVY):
     box=slide.shapes.add_textbox(Inches(x),Inches(y),Inches(w),Inches(h))
@@ -23,7 +32,10 @@ def shape_text(slide,x,y,w,h,text,size=28,bold=False,color=NAVY):
     tf.margin_top=Inches(.04);tf.margin_bottom=Inches(.04)
     p=tf.paragraphs[0];p.text=text;p.alignment=PP_ALIGN.LEFT
     for run in p.runs:
-        run.font.name="Microsoft YaHei"
+        run.font.name=CJK_FONT
+        east_asian=OxmlElement("a:ea")
+        east_asian.set("typeface",CJK_FONT)
+        run._r.get_or_add_rPr().append(east_asian)
         run.font.size=Pt(size)
         run.font.bold=bold
         run.font.color.rgb=color
@@ -61,6 +73,8 @@ def create_deck(data):
         shape_text(slide,.8,2.05,11.4,1.2,"答案：" + item["answer"],24,True)
         analysis="解析：" + item["solution"]
         shape_text(slide,.8,3.35,11.4,2.5,analysis,21 if len(analysis)<200 else 17)
+        if item.get("teaching_objective"):
+            shape_text(slide,.8,5.95,11.3,.42,"教学目标："+item["teaching_objective"],14,color=GREY)
         shape_text(slide,.8,6.45,11.3,.5,"知识点："+" / ".join(item["knowledge_tags"]),14,color=GREY)
     return prs
 

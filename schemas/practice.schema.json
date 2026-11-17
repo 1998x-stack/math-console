@@ -10,7 +10,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.1.0"
+      "const": "0.2.0"
     },
     "problem_id": {
       "type": "string"
@@ -33,6 +33,7 @@
           "question",
           "answer",
           "solution",
+          "teaching_objective",
           "knowledge_tags",
           "target_step_ids"
         ],
@@ -56,6 +57,10 @@
             "minLength": 1
           },
           "solution": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teaching_objective": {
             "type": "string",
             "minLength": 1
           },

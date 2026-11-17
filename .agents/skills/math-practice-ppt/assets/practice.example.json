@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "problem_id": "example-xlnx-ax",
   "lesson_title": "导数、单调性与参数",
   "teacher_notes": "按学生题目页播放；教师答案页必须留在后面。此示例内容需结合实际原题独立审校。",
@@ -10,6 +10,7 @@
       "question": "求函数 f(x)=x²-2x 的导数。",
       "answer": "f'(x)=2x-2。",
       "solution": "利用幂函数求导法则逐项求导。",
+      "teaching_objective": "能独立使用幂函数求导法则。",
       "knowledge_tags": [
         "导数"
       ],
@@ -24,6 +25,7 @@
       "question": "讨论 g(x)=x²-4x 的单调性。",
       "answer": "在 (-∞,2) 上递减，在 (2,+∞) 上递增。",
       "solution": "g'(x)=2x-4，导数在 x=2 处由负变正。",
+      "teaching_objective": "能用导数符号变化判断单调区间。",
       "knowledge_tags": [
         "单调性"
       ],
@@ -38,6 +40,7 @@
       "question": "求 h(x)=x³-3x 的极值点和极值。",
       "answer": "x=-1 处极大值 2；x=1 处极小值 -2。",
       "solution": "h'(x)=3x²-3，按 x<-1、-1<x<1、x>1 三段判断符号。",
+      "teaching_objective": "能从导数变号求极值点与极值。",
       "knowledge_tags": [
         "极值"
       ],

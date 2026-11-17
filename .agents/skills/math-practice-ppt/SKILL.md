@@ -14,7 +14,7 @@ Create an editable classroom practice PPTX with foundation, transfer and challen
 
 ## 严格顺序
 1. 围绕本题的知识点、关键误区和逐步能力目标设计至少三道练习（基础、迁移、挑战）。
-2. 每题提供题目、标准答案、可复核解析、目标 step_ids、预估完成分钟数和教师提示。
+2. 每题提供题目、标准答案、可复核解析、明确的教学目标、目标 step_ids、预估完成分钟数和教师提示。
 3. 教师独立审核新练习的正确性及其答案；若引入新不等式或新定理必须重新审校。
 4. 编写 practice.json；参考 assets/practice.example.json 的 JSON 契约。
 5. 运行 scripts/build_slides.py --run <dir>，生成真正可编辑的 practice.pptx（文字与形状不是截图）。

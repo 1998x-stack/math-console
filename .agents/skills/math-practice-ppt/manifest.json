@@ -1,7 +1,7 @@
 {
   "id": "math-practice-ppt",
-  "version": "0.1.1",
-  "schema_version": "0.1.0",
+  "version": "0.2.0",
+  "schema_version": "0.2.0",
   "stage": "ppt",
   "title": "分层课堂练习 PPTX 生产",
   "description": "Create an editable classroom practice PPTX with foundation, transfer and challenge questions plus separate teacher answer slides; use after the verified lesson.",
