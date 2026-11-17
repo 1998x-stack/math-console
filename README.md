@@ -82,3 +82,7 @@ python scripts/math_console.py release --run workspaces/lesson-001
 ```
 
 **必须重视：** G2 审校通过前不能生产课堂发布视频；高风险证明需要真人教师签核。Manim Python 来源于模型生成，不得在未隔离的主机执行。仅有结构校验、符号抽样或 ffprobe 检测均不代表教学内容已被数学上证明正确。
+
+## Codex 本地深度迭代
+
+本地 Codex 可直接使用 [主控深度迭代 Prompt](prompts/codex/deep-iteration.md) 进行 Agent/Skill 框架审计、真实题目 E2E、质量门禁测试与分阶段修复；下一轮使用 [继续迭代 Prompt](prompts/codex/continue-iteration.md)。完整启动命令见 [Codex Prompt 使用说明](prompts/codex/README.md)。
