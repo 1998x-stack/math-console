@@ -53,7 +53,7 @@ PY
 
 - **入口**：[AGENTS.md](AGENTS.md)（Codex / OpenCode / Pi）、[CLAUDE.md](CLAUDE.md)（Claude Code）、[Agent.md](Agent.md)（流程索引）。
 - **九个 Skills**：[.agents/skills](.agents/skills)（含总流程和八个专业技能）；各自有 `SKILL.md / manifest.json / references / scripts / assets`。
-- **专业子 Agent**：[.opencode/agents](.opencode/agents)，含主控、证明审校、教研审阅、发布审阅。
+- **四平台原生 Agent**：[角色清单](agents/registry.json)、[运行时深度架构](docs/architecture/agent-runtime.md)。共 10 个 Agent 角色，部署至 `.pi/agents/`、`.opencode/agents/`、`.claude/agents/`、`.codex/agents/`。
 - **完整工程规范**：[workbench-pipeline.md](docs/architecture/workbench-pipeline.md)；[跨平台接入](docs/architecture/agent-compatibility.md)。
 - **CI 测试**：[validate-agent-skills.yml](.github/workflows/validate-agent-skills.yml)，验证 Skill 元信息、符号链接、Python 语法和示例质量门禁。
 
