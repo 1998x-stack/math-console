@@ -1,0 +1,100 @@
+{
+  "project": "math-console",
+  "registry_version": "0.1.0",
+  "manifest_schema_version": "0.1.0",
+  "product": "AI Math Teacher Workbench",
+  "updated": "2026-11-17",
+  "canonical_skill_root": ".agents/skills",
+  "agent_entrypoints": {
+    "codex": "AGENTS.md",
+    "opencode": "AGENTS.md",
+    "pi": "AGENTS.md",
+    "claude": "CLAUDE.md",
+    "human": "Agent.md"
+  },
+  "stages": [
+    {
+      "order": 0,
+      "stage": "orchestrate",
+      "skill": "math-teacher-pipeline",
+      "manifest": ".agents/skills/math-teacher-pipeline/manifest.json",
+      "gate": "workflow"
+    },
+    {
+      "order": 1,
+      "stage": "intake",
+      "skill": "math-image-intake",
+      "manifest": ".agents/skills/math-image-intake/manifest.json",
+      "gate": "G0"
+    },
+    {
+      "order": 2,
+      "stage": "solve",
+      "skill": "math-solution",
+      "manifest": ".agents/skills/math-solution/manifest.json",
+      "gate": "G1"
+    },
+    {
+      "order": 3,
+      "stage": "verify",
+      "skill": "math-proof-audit",
+      "manifest": ".agents/skills/math-proof-audit/manifest.json",
+      "gate": "G2"
+    },
+    {
+      "order": 4,
+      "stage": "storyboard",
+      "skill": "math-storyboard",
+      "manifest": ".agents/skills/math-storyboard/manifest.json",
+      "gate": "G3"
+    },
+    {
+      "order": 5,
+      "stage": "manim",
+      "skill": "math-manim",
+      "manifest": ".agents/skills/math-manim/manifest.json",
+      "gate": "G4a"
+    },
+    {
+      "order": 6,
+      "stage": "video",
+      "skill": "math-video",
+      "manifest": ".agents/skills/math-video/manifest.json",
+      "gate": "G4b"
+    },
+    {
+      "order": 7,
+      "stage": "ppt",
+      "skill": "math-practice-ppt",
+      "manifest": ".agents/skills/math-practice-ppt/manifest.json",
+      "gate": "G4c"
+    },
+    {
+      "order": 8,
+      "stage": "release",
+      "skill": "math-release-qa",
+      "manifest": ".agents/skills/math-release-qa/manifest.json",
+      "gate": "G5"
+    }
+  ],
+  "policies": {
+    "single_source_of_truth": true,
+    "independent_math_review": true,
+    "high_risk_human_approval": true,
+    "untrusted_manim_sandbox": true,
+    "real_media_required": true,
+    "never_fake_artifacts": true
+  },
+  "versioning": {
+    "skill_semver": "MAJOR: incompatible data/gate; MINOR: new ability; PATCH: wording/bugfix",
+    "deprecation": "Keep old manifest snapshots in tags; upgrade schema with migration notes and tests",
+    "release_condition": "CI success and real teaching artifact evidence"
+  },
+  "planned_next_steps": [
+    "real multimodal OCR adapter with uncertainty UI",
+    "remote /mcp renderer client and authenticated job queue",
+    "TTS alignment and SRT export",
+    "OMML equation editing in PPTX",
+    "golden math proof test corpus"
+  ]
+}
