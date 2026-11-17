@@ -34,6 +34,7 @@ RELEASE_FILES = (
     "storyboard.json", "storyboard.md", "lesson_scene.py",
     "lesson.mp4", "practice.json", "practice.pptx",
 )
+TEACHER_APPROVAL_FILE = "teacher-approval.json"
 FORBIDDEN_IMPORTS = {"os", "sys", "subprocess", "socket", "requests", "httpx", "urllib", "shutil", "pathlib"}
 FORBIDDEN_CALLS = {"eval", "exec", "compile", "open", "__import__"}
 # A track whose peak stays below this level is treated as having no real narration.
@@ -543,6 +544,10 @@ def check_release(run: Path):
     unlisted = sorted(set(RELEASE_FILES) - set(artifacts))
     if unlisted:
         fail("release.json 未登记全部交付物: " + ", ".join(unlisted))
+    if (run / TEACHER_APPROVAL_FILE).is_file():
+        if TEACHER_APPROVAL_FILE not in artifacts:
+            fail("release.json 未登记现有教师批准证据")
+        check_teacher_approval(run)
     stale = []
     for name, recorded in artifacts.items():
         file = require(run, name)
@@ -571,12 +576,35 @@ def status(run: Path):
         except (GateError, OSError, ValueError, KeyError, TypeError) as exc:
             print(f"[BLOCKED] {stage}: {exc}")
 
+def check_teacher_approval(run: Path):
+    """Bind an optional user-declared package approval to exact shipped bytes.
+
+    This validates provenance structure and hashes, not whether a person truly
+    reviewed every exercise. That claim remains the human reviewer's own.
+    """
+    evidence = load_json(require(run, TEACHER_APPROVAL_FILE))
+    info = load_run_meta(run)
+    if evidence.get("run_id") != info["run_id"] or evidence.get("approved") is not True:
+        fail("教师批准证据的 run_id 不匹配或未批准")
+    if not evidence.get("reviewer_name") or evidence.get("approval_type") != "user_self_attestation":
+        fail("教师批准证据缺少署名或声明来源")
+    recorded = evidence.get("approved_artifact_sha256")
+    if not isinstance(recorded, dict) or set(recorded) != set(RELEASE_FILES):
+        fail("教师批准证据未覆盖全部发布产物")
+    changed = [name for name in RELEASE_FILES if recorded[name] != digest(require(run, name))]
+    if changed:
+        fail("教师批准证据所指产物已变更: " + ", ".join(changed))
+    return evidence
+
 def do_release(run: Path):
     check_ppt(run)
+    if (run / TEACHER_APPROVAL_FILE).is_file():
+        check_teacher_approval(run)
     info = load_run_meta(run)
+    release_files = RELEASE_FILES + ((TEACHER_APPROVAL_FILE,) if (run / TEACHER_APPROVAL_FILE).is_file() else ())
     files = {name: {"sha256": digest(require(run, name)),
                     "size_bytes": require(run, name).stat().st_size}
-             for name in RELEASE_FILES}
+             for name in release_files}
     release = {
         "schema_version": "0.2.0", "run_id": info["run_id"],
         "created_at": datetime.now(timezone.utc).isoformat(),

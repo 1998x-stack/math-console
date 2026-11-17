@@ -232,6 +232,32 @@ class ReleaseFreshnessGateTest(unittest.TestCase):
                              "ctx-auditor-1")
 
     @unittest.skipUnless(HAVE_FFMPEG, "ffmpeg/ffprobe not installed")
+    def test_teacher_package_approval_is_hashed_and_bound_to_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = build_publishable(Path(tmp))
+            write_deck(run, practice_data())
+            approval = {
+                "run_id": run.name,
+                "approved": True,
+                "reviewer_name": "测试教师",
+                "approval_type": "user_self_attestation",
+                "approved_artifact_sha256": {
+                    name: mc.digest(run / name) for name in mc.RELEASE_FILES
+                },
+            }
+            (run / mc.TEACHER_APPROVAL_FILE).write_text(
+                json.dumps(approval, ensure_ascii=False), encoding="utf-8")
+            report = mc.do_release(run)
+            self.assertIn(mc.TEACHER_APPROVAL_FILE, report["artifacts"])
+            mc.check_release(run)
+            approval["approved_artifact_sha256"]["practice.json"] = "0" * 64
+            (run / mc.TEACHER_APPROVAL_FILE).write_text(
+                json.dumps(approval, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises(mc.GateError) as ctx:
+                mc.check_release(run)
+            self.assertIn("教师批准证据所指产物已变更", str(ctx.exception))
+
+    @unittest.skipUnless(HAVE_FFMPEG, "ffmpeg/ffprobe not installed")
     def test_release_requires_every_release_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             run = build_publishable(Path(tmp))
