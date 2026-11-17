@@ -85,7 +85,9 @@ def check_review(run: Path) -> dict:
         raise ValueError("Video changed since review")
     if digest(run / "storyboard.json") != data.get("storyboard_sha256"):
         raise ValueError("Storyboard changed since review")
-    if data.get("ppt_sha256") and digest(run / "practice.pptx") != data["ppt_sha256"]:
+    if not data.get("ppt_sha256"):
+        raise ValueError("PPT was not present when visual review was prepared")
+    if digest(run / "practice.pptx") != data["ppt_sha256"]:
         raise ValueError("PPT changed since review")
     if not all(data.get("reviewer", {}).get(k) for k in ("agent_id", "context_id")):
         raise ValueError("Missing independent reviewer identity evidence")

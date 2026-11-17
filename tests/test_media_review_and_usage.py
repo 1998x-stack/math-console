@@ -52,6 +52,34 @@ class QaToolsTest(unittest.TestCase):
             self.assertEqual(got["events"], 2)
 
 
+
+    def test_scene_frame_and_ppt_hashes_must_match(self):
+        mod = load("scripts/prepare_media_review.py", "prepare_media_review_hashes")
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d)
+            (run / "lesson.mp4").write_bytes(b"v" * 2048)
+            (run / "storyboard.json").write_text(json.dumps({"beats": [
+                {"id": "b1", "step_ids": ["s1"], "duration_s": 3}
+            ]}), encoding="utf-8")
+            (run / "practice.pptx").write_bytes(b"p" * 2048)
+            data = mod.build_review(run, extract=False)
+            (run / "reviews").mkdir()
+            frame = run / data["scenes"][0]["frame"]
+            frame.write_bytes(b"frame-bytes" * 50)
+            data["scenes"][0].update({"frame_sha256": mod.digest(frame),
+                                      "verdict": "pass", "math_correct": True,
+                                      "layout_ok": True, "narration_aligned": True,
+                                      "notes": "独立检查过画面、数学步骤、真实旁白"})
+            data["reviewer"] = {"agent_id": "reviewer", "context_id": "actual-ctx"}
+            data["ppt_review"] = {"status": "pass", "notes": "逐页检查完成"}
+            data["status"] = "reviewed"
+            (run / "media-review.json").write_text(json.dumps(data), encoding="utf-8")
+            self.assertEqual(mod.check_review(run)["status"], "reviewed")
+            frame.write_bytes(b"tampered-frame" * 50)
+            with self.assertRaisesRegex(ValueError, "frame bytes changed"):
+                mod.check_review(run)
+
+
 if __name__ == "__main__":
     unittest.main()
 

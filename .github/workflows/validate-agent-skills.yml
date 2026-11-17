@@ -13,6 +13,8 @@ on:
       - 'scripts/**'
       - 'schemas/**'
       - 'tests/**'
+      - 'benchmarks/**'
+      - 'docs/qa/**'
       - 'requirements-workbench.txt'
       - '.github/workflows/validate-agent-skills.yml'
   pull_request:
@@ -26,6 +28,8 @@ on:
       - 'scripts/**'
       - 'schemas/**'
       - 'tests/**'
+      - 'benchmarks/**'
+      - 'docs/qa/**'
       - 'requirements-workbench.txt'
   workflow_dispatch:
 jobs:
