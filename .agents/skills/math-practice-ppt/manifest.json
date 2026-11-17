@@ -1,0 +1,43 @@
+{
+  "id": "math-practice-ppt",
+  "version": "0.1.0",
+  "schema_version": "0.1.0",
+  "stage": "ppt",
+  "title": "分层课堂练习 PPTX 生产",
+  "description": "Create an editable classroom practice PPTX with foundation, transfer and challenge questions plus separate teacher answer slides; use after the verified lesson.",
+  "owner_role": "specialist-agent",
+  "inputs": [
+    "problem.json",
+    "solution.json",
+    "audit.json"
+  ],
+  "outputs": [
+    "practice.json",
+    "practice.pptx"
+  ],
+  "prerequisites": [
+    "G2 数学审校已完成；视频真实渲染后再做最终发布质检",
+    "练习题需重新校验正确性，不得因为来自模型就直接相信"
+  ],
+  "gates": [
+    "题目与答案分隔，全部练习有可复核解析；PPTX 内文字可编辑。"
+  ],
+  "references": [
+    "references/assessment-design.md"
+  ],
+  "scripts": [
+    "scripts/build_slides.py"
+  ],
+  "assets": [
+    "assets/practice.example.json"
+  ],
+  "status": "starter-implementation",
+  "requires_external_model": true,
+  "requires_human_signoff_for_high_risk": true,
+  "compatibility": [
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "Claude Code"
+  ]
+}

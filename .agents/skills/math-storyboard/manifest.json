@@ -1,0 +1,43 @@
+{
+  "id": "math-storyboard",
+  "version": "0.1.0",
+  "schema_version": "0.1.0",
+  "stage": "storyboard",
+  "title": "可验证教学分镜与讲稿设计",
+  "description": "Design step-linked Chinese math teaching storyboard, visual metaphors, duration and narration aligned to a verified solution; use only after proof audit passes.",
+  "owner_role": "specialist-agent",
+  "inputs": [
+    "problem.json",
+    "solution.json",
+    "audit.json"
+  ],
+  "outputs": [
+    "storyboard.json",
+    "storyboard.md"
+  ],
+  "prerequisites": [
+    "problem.json, solution.json, solution.md, audit.json 的 G2 审校通过",
+    "确定学生年级、课程深度、预计视频时长"
+  ],
+  "gates": [
+    "G2 未通过不许生成发布用分镜；所有场景与数学步骤可追溯。"
+  ],
+  "references": [
+    "references/pedagogical-storyboard.md"
+  ],
+  "scripts": [
+    "scripts/check_storyboard.py"
+  ],
+  "assets": [
+    "assets/storyboard.example.json"
+  ],
+  "status": "starter-implementation",
+  "requires_external_model": true,
+  "requires_human_signoff_for_high_risk": true,
+  "compatibility": [
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "Claude Code"
+  ]
+}

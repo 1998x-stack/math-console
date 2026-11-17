@@ -1,0 +1,44 @@
+{
+  "id": "math-video",
+  "version": "0.1.0",
+  "schema_version": "0.1.0",
+  "stage": "video",
+  "title": "隔离渲染与旁白 MP4 合成",
+  "description": "Render editable Manim source in a resource-limited Docker container, sync a real Chinese voiceover track and inspect final MP4 streams; use after manim stage.",
+  "owner_role": "sandbox-renderer",
+  "inputs": [
+    "lesson_scene.py",
+    "storyboard.json",
+    "voiceover.wav"
+  ],
+  "outputs": [
+    "silent.mp4",
+    "lesson.mp4"
+  ],
+  "prerequisites": [
+    "G4a Manim 静态检查通过",
+    "Docker、ffmpeg、ffprobe 就绪；已获得真实旁白音频 voiceover.wav"
+  ],
+  "gates": [
+    "无声预览不得冒充最终讲解 MP4；容器沙箱不可信 Python 是硬性要求。"
+  ],
+  "references": [
+    "references/render-protocol.md"
+  ],
+  "scripts": [
+    "scripts/render_docker.py"
+  ],
+  "assets": [
+    "assets/Dockerfile",
+    "assets/voiceover.example.md"
+  ],
+  "status": "starter-implementation",
+  "requires_external_model": true,
+  "requires_human_signoff_for_high_risk": true,
+  "compatibility": [
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "Claude Code"
+  ]
+}

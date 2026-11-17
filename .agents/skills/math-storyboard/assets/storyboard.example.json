@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1.0",
+  "problem_id": "example-xlnx-ax",
+  "lesson_title": "导数符号与单调性",
+  "learning_objectives": [
+    "认识导数零点在单调性讨论中的作用"
+  ],
+  "beats": [
+    {
+      "id": "beat-intro",
+      "step_ids": [
+        "s1"
+      ],
+      "visual": "展示 f(x)=x ln x-ax，强调定义域 x>0",
+      "voiceover": "求导前，先确定我们的函数在哪里有定义。",
+      "pedagogy": "先建立研究对象和定义域，再进入计算。",
+      "duration_s": 9,
+      "transition": "fade"
+    },
+    {
+      "id": "beat-sign",
+      "step_ids": [
+        "s2"
+      ],
+      "visual": "导数符号表由负转正，标记 x0=e^(a-1)",
+      "voiceover": "导数先小于零，再大于零，所以先下降再上升。",
+      "pedagogy": "将图像直觉与可证明的符号变化联系起来。",
+      "duration_s": 14,
+      "transition": "transform"
+    }
+  ]
+}

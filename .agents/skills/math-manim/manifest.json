@@ -1,0 +1,41 @@
+{
+  "id": "math-manim",
+  "version": "0.1.0",
+  "schema_version": "0.1.0",
+  "stage": "manim",
+  "title": "可编辑 Manim 教学动画源码",
+  "description": "Translate an audited mathematical storyboard into editable Manim Community Python scenes with Chinese fonts, predictable timing and source mapping; use for lesson_scene.py.",
+  "owner_role": "specialist-agent",
+  "inputs": [
+    "storyboard.json",
+    "audit.json"
+  ],
+  "outputs": [
+    "lesson_scene.py"
+  ],
+  "prerequisites": [
+    "G3 storyboard.json + storyboard.md",
+    "Python 3.11+、Manim Community 0.19.x 项目兼容约束"
+  ],
+  "gates": [
+    "必须能追溯至已验证分镜；代码静态检查通过且等待沙箱真实渲染。"
+  ],
+  "references": [
+    "references/manim-engineering.md"
+  ],
+  "scripts": [
+    "scripts/lint_scene.py"
+  ],
+  "assets": [
+    "assets/lesson_scene_template.py"
+  ],
+  "status": "starter-implementation",
+  "requires_external_model": true,
+  "requires_human_signoff_for_high_risk": true,
+  "compatibility": [
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "Claude Code"
+  ]
+}
