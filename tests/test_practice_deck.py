@@ -29,7 +29,7 @@ class PracticeDeckTest(unittest.TestCase):
             self.assertIn(item["question"],student)
             self.assertNotIn(item["answer"],student)
             self.assertIn(item["answer"],teacher)
-        self.assertTrue(all(shape.has_text_frame or True for slide in deck.slides for shape in slide.shapes))
+        self.assertTrue(any(shape.has_text_frame for slide in deck.slides for shape in slide.shapes))
 
 if __name__=="__main__":
     unittest.main()
