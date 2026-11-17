@@ -35,6 +35,8 @@ RELEASE_FILES = (
     "lesson.mp4", "practice.json", "practice.pptx",
 )
 TEACHER_APPROVAL_FILE = "teacher-approval.json"
+TEACHER_REVIEW_POLICIES = ("auto_waiver", "strict")
+DEFAULT_TEACHER_REVIEW_POLICY = "auto_waiver"  # policy waiver is NOT a human signature
 FORBIDDEN_IMPORTS = {"os", "sys", "subprocess", "socket", "requests", "httpx", "urllib", "shutil", "pathlib"}
 FORBIDDEN_CALLS = {"eval", "exec", "compile", "open", "__import__"}
 # A track whose peak stays below this level is treated as having no real narration.
@@ -203,6 +205,31 @@ def check_solve(run: Path):
     check_step_graph(steps)
     return problem, solution
 
+def teacher_review_policy(run: Path) -> str:
+    """Stable, explicit per-run review policy, backwards-compatible default."""
+    policy = load_run_meta(run).get("teacher_review_policy", DEFAULT_TEACHER_REVIEW_POLICY)
+    if policy not in TEACHER_REVIEW_POLICIES:
+        fail("无效教师审核策略: " + str(policy))
+    return policy
+
+
+def teacher_review_decision(run: Path, audit: dict) -> dict:
+    policy = teacher_review_policy(run)
+    requested = bool(audit["human_review"]["required"])
+    recorded = bool(audit["human_review"]["approved"])
+    if not requested:
+        decision = "not_required"
+    elif recorded:
+        decision = "self_attested_in_audit"
+    elif policy == "auto_waiver":
+        decision = "waived_by_default_policy"
+    else:
+        decision = "pending_real_teacher"
+    return {"mode": policy, "decision": decision,
+            "human_review_approved_in_audit": recorded,
+            "real_teacher_signature_verified": False}
+
+
 def check_verify(run: Path):
     problem, solution = check_solve(run)
     audit = load_json(require(run, "audit.json"))
@@ -233,12 +260,17 @@ def check_verify(run: Path):
     if risk == "standard" and len(problem.get("risk_rationale", "").strip()) < MIN_RISK_RATIONALE:
         fail("risk_level=standard 必须提供 risk_rationale（≥10 字）说明为何不属高风险，防止自行降级")
     human = audit["human_review"]
-    if risk == "high" and (not human["required"] or not human["approved"]):
-        fail("高风险数学证明必须有教师人工签核")
-    if human["required"] and (
-        not human["approved"] or not human.get("reviewer_name") or not human.get("reviewed_at")
+    if risk == "high" and not human["required"]:
+        fail("高风险数学证明必须记录 human_review.required=true，不能隐藏审核义务")
+    policy = teacher_review_policy(run)
+    if human["required"] and policy == "strict" and not human["approved"]:
+        fail("strict 策略必须有真实教师审核，不能依靠默认豁免")
+    if human["required"] and human["approved"] and (
+        not human.get("reviewer_name") or not human.get("reviewed_at")
     ):
-        fail("教师签核缺少真实姓名、时间或批准状态")
+        fail("声称真人教师批准时必须提供姓名及审核时间")
+    # auto_waiver is a policy decision, not evidence of a human approving the proof.
+    # Independent mathematical audit remains mandatory under both policies.
     return problem, solution, audit
 
 def check_storyboard(run: Path):
@@ -504,6 +536,7 @@ def gate_evidence(run: Path) -> dict:
             "checks": len(audit["checks"]),
             "tested_cases": len(audit.get("tested_cases", [])),
             "human_approved": audit["human_review"]["approved"],
+            "teacher_review_policy": teacher_review_decision(run, audit),
         },
         "storyboard": {
             "beats": len(board["beats"]),
@@ -544,6 +577,11 @@ def check_release(run: Path):
     unlisted = sorted(set(RELEASE_FILES) - set(artifacts))
     if unlisted:
         fail("release.json 未登记全部交付物: " + ", ".join(unlisted))
+    policy = teacher_review_policy(run)
+    if report.get("teacher_review_policy") != policy:
+        fail("发布报告与当前教师审核策略不一致")
+    if policy == "strict" and not (run / TEACHER_APPROVAL_FILE).is_file():
+        fail("strict 策略要求真实教师签核文件 teacher-approval.json")
     if (run / TEACHER_APPROVAL_FILE).is_file():
         if TEACHER_APPROVAL_FILE not in artifacts:
             fail("release.json 未登记现有教师批准证据")
@@ -598,6 +636,8 @@ def check_teacher_approval(run: Path):
 
 def do_release(run: Path):
     check_ppt(run)
+    if teacher_review_policy(run) == "strict" and not (run / TEACHER_APPROVAL_FILE).is_file():
+        fail("strict 策略要求真实教师签核文件；audit.json 自填字段不足以放行")
     if (run / TEACHER_APPROVAL_FILE).is_file():
         check_teacher_approval(run)
     info = load_run_meta(run)
@@ -608,6 +648,8 @@ def do_release(run: Path):
     release = {
         "schema_version": "0.2.0", "run_id": info["run_id"],
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "teacher_review_policy": teacher_review_policy(run),
+        "teacher_review_decision": teacher_review_decision(run, load_json(require(run, "audit.json"))),
         "gate_status": {stage: "pass" for stage in (*STAGES, DRAFT_STAGE)},
         "source_sha256": info["source_sha256"],
         "artifacts": files,
@@ -622,7 +664,9 @@ def do_release(run: Path):
     print(f"[RELEASE] {run / 'release.json'}")
     return release
 
-def do_init(image: Path, run: Path):
+def do_init(image: Path, run: Path, teacher_policy: str = DEFAULT_TEACHER_REVIEW_POLICY):
+    if teacher_policy not in TEACHER_REVIEW_POLICIES:
+        fail("非法教师审核策略: " + str(teacher_policy))
     if run.exists() and any(run.iterdir()):
         fail("工作区已存在且不为空，禁止覆盖：请选新 --run 路径")
     if image.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp", ".bmp"):
@@ -642,7 +686,8 @@ def do_init(image: Path, run: Path):
             "created_at": datetime.now(timezone.utc).isoformat(),
             "source_image": str(target.relative_to(run)),
             "source_sha256": digest(target),
-            "phase": "awaiting_visual_transcription"}
+            "phase": "awaiting_visual_transcription",
+        "teacher_review_policy": teacher_policy}
     (run / "run.json").write_text(json.dumps(info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"[INIT] {run}\n原图保存在 {target}\n请由具备视觉能力的 Agent 录入 problem.json；随后 check --stage intake")
 
@@ -659,6 +704,9 @@ def main():
     init = sub.add_parser("init", help="Initialize a run from a problem image")
     init.add_argument("--image", required=True, type=Path)
     init.add_argument("--run", required=True, type=Path)
+    init.add_argument("--teacher-review-policy", choices=TEACHER_REVIEW_POLICIES,
+                      default=DEFAULT_TEACHER_REVIEW_POLICY,
+                      help="auto_waiver: 默认免人工签核不伪造签名；strict: 需要真实签核证据")
     for cmd in ("status", "release"):
         sub.add_parser(cmd).add_argument("--run", required=True, type=Path)
     check = sub.add_parser("check", help="Validate a specific stage or all stages")
@@ -667,7 +715,7 @@ def main():
     args = p.parse_args()
     try:
         if args.command == "init":
-            do_init(args.image, args.run)
+            do_init(args.image, args.run, args.teacher_review_policy)
         elif args.command == "status":
             status(args.run)
         elif args.command == "release":

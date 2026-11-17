@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -349,7 +350,8 @@ class PreviewRenderModeTest(unittest.TestCase):
             module.run_checked = lambda cmd, timeout=600: calls.append([str(x) for x in cmd])
             module.media_duration = lambda path: 3.0
             args = module.parse_args(["--run", str(run), "--preview-only"])
-            module.run_render(args)
+            with mock.patch.object(module.shutil, "which", return_value="/usr/bin/mock"):
+                module.run_render(args)
             self.assertTrue((run / "silent.mp4").is_file(), "preview must produce silent.mp4")
             self.assertFalse((run / "lesson.mp4").exists(), "preview must not mint lesson.mp4")
             self.assertTrue(any("docker" in c[0] for c in calls), "render must go through the sandbox")
@@ -397,3 +399,55 @@ class ManifestIndexTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TeacherReviewPolicyTest(unittest.TestCase):
+    """A default review waiver must never be reported as a real signed approval."""
+
+    def test_default_waiver_allows_high_risk_with_independent_math_audit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = build_run(Path(tmp), risk_level="high")
+            path = run / "audit.json"
+            audit = json.loads(path.read_text(encoding="utf-8"))
+            audit["human_review"] = {"required": True, "approved": False}
+            path.write_text(json.dumps(audit, ensure_ascii=False), encoding="utf-8")
+            mc.check_verify(run)
+            result = mc.teacher_review_decision(run, audit)
+            self.assertEqual("waived_by_default_policy", result["decision"])
+            self.assertFalse(result["real_teacher_signature_verified"])
+            self.assertFalse(audit["human_review"]["approved"])
+
+    def test_strict_requires_real_signoff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = build_run(Path(tmp), risk_level="high")
+            path = run / "run.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["teacher_review_policy"] = "strict"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            path = run / "audit.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["human_review"] = {"required": True, "approved": False}
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaises(mc.GateError) as error:
+                mc.check_verify(run)
+            self.assertIn("strict", str(error.exception))
+
+    def test_waiver_does_not_bypass_independent_audit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = build_run(Path(tmp), risk_level="high")
+            path = run / "audit.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["reviewer"]["context_id"] = "ctx-solver-1"
+            data["human_review"] = {"required": True, "approved": False}
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaises(mc.GateError):
+                mc.check_verify(run)
+
+    def test_invalid_review_policy_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = build_run(Path(tmp))
+            path = run / "run.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["teacher_review_policy"] = "pretend_approved"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaises(mc.GateError):
+                mc.check_verify(run)

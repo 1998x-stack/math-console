@@ -38,6 +38,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install media test dependencies (ffmpeg and ffprobe)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
       - name: Install deterministic validation dependencies
         run: python -m pip install -r requirements-workbench.txt
       - name: Check all Skills, manifests, references, scripts and symlinks
