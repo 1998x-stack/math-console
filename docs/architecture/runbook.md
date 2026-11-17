@@ -80,3 +80,9 @@ python -m unittest discover -s tests -p 'test_agent_profiles.py' -v
 ## 教师签核配置
 
 默认 `--teacher-review-policy auto_waiver`：只免人工签字阻塞，并将结果写为策略放行，不伪造真人签名。选择 `--teacher-review-policy strict` 时，最终必须提供真的 `teacher-approval.json`，且其哈希清单覆盖全部发布文件。
+
+## 视觉基准、媒体审阅与运行成本
+
+- 题目原生视觉基准：[benchmarks/vision/README.md](../../benchmarks/vision/README.md)
+- 真实视频帧提取与审阅：`python scripts/prepare_media_review.py --run workspaces/<run-id>`，协议见 [media-visual-review.md](../qa/media-visual-review.md)。脚本不识别任何数学图片。
+- 实际 Agent usage 汇总：`python scripts/summarize_agent_usage.py --events workspaces/<run-id>/reports/agent-events.jsonl`，协议见 [agent-telemetry.md](../qa/agent-telemetry.md)。缺失费用不会伪造为 0。

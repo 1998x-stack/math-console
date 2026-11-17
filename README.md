@@ -94,3 +94,9 @@ python scripts/math_console.py release --run workspaces/lesson-001
 ### 默认教师签核策略
 
 新工作区默认为 `auto_waiver`：独立数学审校 G2 通过后，无需等待人工签名。`release.json` 会记录 `waived_by_default_policy`，这不是教师本人签字。需要严格真人确认时用 `math_console.py init --teacher-review-policy strict`，最终发布还需 `teacher-approval.json` 绑定全部交付物哈希。
+
+## 新增质量工程工具
+
+- [原创数学图片视觉基准集](benchmarks/vision/README.md)：函数与导数、解析几何、立体几何 3 道原创题；交给 Agent 原生视觉理解，不用 OCR。
+- [Manim 视频与 PPT 视觉审阅](docs/qa/media-visual-review.md)：按 Storyboard 提取真实视频帧，Agent 自己审查数学和画面。
+- [Agent 调用成本与失败恢复](docs/qa/agent-telemetry.md)：汇总真实的 Agent 运行事件，缺失成本以 null 表示。
