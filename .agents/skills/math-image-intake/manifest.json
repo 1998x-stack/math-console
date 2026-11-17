@@ -1,0 +1,41 @@
+{
+  "id": "math-image-intake",
+  "version": "0.1.0",
+  "schema_version": "0.1.0",
+  "stage": "intake",
+  "title": "题目图片识别与结构化录入",
+  "description": "Transcribe a mathematics problem image with exact LaTeX, subquestion IDs, diagrams and ambiguity tracking; use before attempting any solution.",
+  "owner_role": "specialist-agent",
+  "inputs": [
+    "run.json",
+    "input/problem.png 等原图"
+  ],
+  "outputs": [
+    "problem.json"
+  ],
+  "prerequisites": [
+    "原题图片、引用来源与年级",
+    "允许保留题干原有的简体中文与 LaTeX，不得凭空补充小问"
+  ],
+  "gates": [
+    "任何 OCR 模糊、符号歧义或题面缺失不得静默推断。"
+  ],
+  "references": [
+    "references/transcription-standard.md"
+  ],
+  "scripts": [
+    "scripts/check_problem.py"
+  ],
+  "assets": [
+    "assets/problem.example.json"
+  ],
+  "status": "starter-implementation",
+  "requires_external_model": true,
+  "requires_human_signoff_for_high_risk": true,
+  "compatibility": [
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "Claude Code"
+  ]
+}

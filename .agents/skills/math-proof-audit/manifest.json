@@ -1,0 +1,42 @@
+{
+  "id": "math-proof-audit",
+  "version": "0.1.0",
+  "schema_version": "0.1.0",
+  "stage": "verify",
+  "title": "独立数学证明审校",
+  "description": "Independently audit multi-step math proofs, assumptions, parameter cases, counterexamples and verification reports; must run before storyboard or animation.",
+  "owner_role": "independent-reviewer",
+  "inputs": [
+    "problem.json",
+    "solution.json",
+    "solution.md"
+  ],
+  "outputs": [
+    "audit.json"
+  ],
+  "prerequisites": [
+    "problem.json + solution.json + solution.md",
+    "审校上下文与解题上下文隔离；审校身份不得伪造"
+  ],
+  "gates": [
+    "验证独立性、所有 step 覆盖、严重问题清零；复杂证明需真实人工确认。"
+  ],
+  "references": [
+    "references/verification-matrix.md"
+  ],
+  "scripts": [
+    "scripts/check_audit.py"
+  ],
+  "assets": [
+    "assets/audit.example.json"
+  ],
+  "status": "starter-implementation",
+  "requires_external_model": true,
+  "requires_human_signoff_for_high_risk": true,
+  "compatibility": [
+    "Codex",
+    "OpenCode",
+    "Pi",
+    "Claude Code"
+  ]
+}

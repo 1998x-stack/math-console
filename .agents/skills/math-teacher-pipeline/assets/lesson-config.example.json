@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1.0",
+  "subject": "高中数学",
+  "locale": "zh-CN",
+  "topic": "函数与导数",
+  "delivery": {
+    "video": "mp4+voiceover",
+    "slides": "pptx-editable"
+  },
+  "policy": {
+    "proof_risk": "high",
+    "human_signoff_for_high_risk": true,
+    "max_source_image_mb": 20
+  },
+  "render": {
+    "mode": "docker",
+    "quality": "low",
+    "font": "Noto Sans CJK SC"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "0.1.0",
+  "problem_id": "replace-with-real-id",
+  "verdict": "block",
+  "reviewer": {
+    "id": "independent-reviewer",
+    "role": "independent_agent",
+    "independent_from_solver": true
+  },
+  "independent_method": "Replace with a separate derivation, not the solver's wording",
+  "checks": [
+    {
+      "id": "domain-check",
+      "passed": false,
+      "evidence": "待核验定义域",
+      "step_ids": [
+        "s1"
+      ]
+    }
+  ],
+  "tested_cases": [],
+  "human_review": {
+    "required": true,
+    "approved": false
+  },
+  "unresolved": [
+    "待独立审校与教师签核，当前示例不得通过 G2"
+  ]
+}
