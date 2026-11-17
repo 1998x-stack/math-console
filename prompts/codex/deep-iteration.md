@@ -193,7 +193,7 @@ git status --short
 
 - **A — 结构层**：所有角色、Skill、manifest、TOML、Schema、单测和配置同步通过（本地证据）。
 - **B — Agent 层**：真实触发 Codex custom subagent，保存委派角色与产物记录；没实际调用则 UNVERIFIED。
-- **C — 数学层**：真实题目 OCR + 全部小问求解 + 独立审校；高风险证明有真实教师签核；缺任何一项则 BLOCKED。
+- **C — 数学层**：Codex Agent 通过原生视觉**实际看懂原始题目图片** + 全部小问求解 + 独立审校；高风险证明有真实教师签核；缺任何一项则 BLOCKED。**不采用 OCR/脚本解析图片。**
 - **D — 媒体层**：Manim 沙箱执行与真实有声 MP4、关键画面检查通过；缺音轨时只能说预览。
 - **E — 课件/发布层**：分层练习正确性复核、可编辑 PPTX、完整 release.json 与哈希通过。
 
