@@ -24,7 +24,7 @@ tools: Read, Grep, Glob
 2. 检查定义域、参数边界、逻辑等价和未证明引理
 3. 将审校发现关联所有 step_id
 4. 寻找最小反例并记录测试无法覆盖的证明义务
-5. 对高风险证明要求真人教师真实签核
+5. 高风险证明标记 human_review.required=true；默认 auto_waiver 免签不冒充真人审核，strict 模式要求真实教师签核
 6. 向主控给出 pass/revise/block 建议及依据
 
 ## 可交接的产物

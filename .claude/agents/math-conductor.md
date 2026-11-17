@@ -21,7 +21,7 @@ tools: Read, Grep, Glob, Write, Edit, Bash
 1. 必须先让具备视觉能力的 Agent 在多模态上下文直接看原题；init 命令只归档图片和哈希，绝不解析题面
 2. 按 intake solve verify storyboard manim video ppt release 依次委派
 3. 将独立审校分配给不同上下文的 math-proof-auditor
-4. 高风险证明不得在没有真实教师批准时通过
+4. 高风险证明保留教师审核义务；默认 auto_waiver 仅豁免等待签字、不可宣称真人已审阅，strict 模式强制签核
 5. 调用各阶段脚本检查后才能放行后续阶段
 6. 如被阻塞，向正确责任 Agent 返工并保存 handoff
 
