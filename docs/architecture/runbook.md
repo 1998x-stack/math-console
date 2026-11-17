@@ -38,3 +38,20 @@ python scripts/math_console.py check --stage intake --run workspaces/example-001
 3. 未制作旁白时无声 MP4 不通过 `video`。
 4. PPT 保持答案与学生题面隔离且文字可编辑。
 5. CI 运行九个 Skill 的 manifest 与符号链接检查、Python 语法与单测。
+
+
+## 6. 四平台原生 Agent（v0.2）
+
+- OpenCode：`.opencode/agents/math-conductor.md` 是 primary；其余 9 个角色可通过 `@math-proof-auditor` 等显式委派。使用 V2 `permissions` 格式。
+- Claude Code：`.claude/agents/*.md` 由 Agent tool 发现，支持手动命名和描述匹配。
+- Codex：`.codex/agents/*.toml` 是自定义 Agent，`.codex/config.toml` 开启多 Agent；请求按名称 spawn 对应角色。子 Agent 继承父级权限，不存在独立只读沙箱保证。
+- Pi：`.pi/agents/*.md` 必须配合项目可信 Subagent 扩展与 agentScope=project/both；没有扩展时使用 `/math-lesson` 提示模板或 Skills 串行调用。
+
+上述原生文件由 `agents/registry.json` 唯一生成：
+
+~~~bash
+python scripts/sync_agents.py --check
+python -m unittest discover -s tests -p 'test_agent_profiles.py' -v
+~~~
+
+角色责任、Gate 转移和失败回滚见 `docs/architecture/agent-runtime.md`。
